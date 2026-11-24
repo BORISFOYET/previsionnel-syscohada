@@ -1,12 +1,15 @@
 # Account's — Prévisionnel financier SYSCOHADA en ligne
 
-Site qui produit, à partir des informations saisies par le client, un prévisionnel financier sur 5 ans
-pour une société de l'un des 17 pays de l'espace OHADA :
+Site qui produit, à partir des informations saisies par le client, un prévisionnel financier sur 5 exercices
+(le premier part du mois de démarrage) pour une société de l'un des 17 pays de l'espace OHADA :
 
-- un **Excel entièrement en formules** (hypothèses en cellules bleues, détail mensuel sur 60 mois, crédit,
-  amortissements, compte de résultat, bilan équilibré, synthèse) ;
-- une **synthèse PDF** (indicateurs clés, graphique, compte de résultat, plan de financement, bilans,
-  seuil de rentabilité, sensibilités).
+- un **Excel entièrement en formules**, au format du modèle de plan financier du cabinet : onglet « Plan
+  financier à imprimer » (page de garde, investissements et financements initiaux, salaires, détail des
+  amortissements, compte de résultat par compte SYSCOHADA, SIG, CAF, seuil de rentabilité, BFR, plan de
+  financement, trésorerie de la première année), tableaux des immobilisations, bilans, et dossier de travail
+  (hypothèses en cellules bleues, détail mensuel, crédit, amortissements) ;
+- le **plan financier en PDF** : les mêmes pages, imprimées à l'identique (formules calculées par pycel,
+  pages dessinées avec reportlab ; polices libres Carlito, Caladea et Liberation dans `app/data/polices`).
 
 Les deux documents prennent le logo, les deux couleurs et la police choisis par le client, avec la mention
 « Réalisé avec Account's » en pied de page.

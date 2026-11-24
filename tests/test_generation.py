@@ -142,7 +142,7 @@ if __name__ == '__main__':
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else None
     for code in PAYS:
         nom, octets, res = generer_livrables({**DONNEES, 'pays': code}, {'primaire': '#8B4513', 'secondaire': '#DDD4B9', 'police': 'Calibri', 'marque': "Réalisé avec Account's"})
-        z = zipfile.ZipFile(io.BytesIO(octets)); assert len(z.namelist()) == 2
+        z = zipfile.ZipFile(io.BytesIO(octets)); assert len(z.namelist()) == 2 and any(n.startswith('Plan_financier') for n in z.namelist())
         xl = openpyxl.load_workbook(io.BytesIO(z.read([n for n in z.namelist() if n.endswith('.xlsx')][0])))
         devise = PAYS[code]['devise']
         for ws in xl.worksheets:

@@ -6,11 +6,13 @@ cellules sont des formules liées au dossier de travail (onglets 10 à 16), qui 
 Les onglets sans données (tableaux d'amortissement sans immobilisation) ne sont pas générés.
 """
 import datetime
+import re
 from copy import copy
 from pathlib import Path
 
 from openpyxl import load_workbook
-from openpyxl.styles import Font, PatternFill
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.formula.tokenizer import Tokenizer
 from openpyxl.utils import get_column_letter as GL, column_index_from_string as CI
 
 from .excel import _argb, clair
@@ -47,6 +49,49 @@ def _style_comme(ws, ref_src, ref_dst):
     s, t = ws[ref_src], ws[ref_dst]
     t.font = copy(s.font); t.fill = copy(s.fill); t.border = copy(s.border)
     t.alignment = copy(s.alignment); t.number_format = s.number_format
+
+
+def _style_comme_entre(ws, ref_src, ref_dst):
+    s, t = ws[ref_src], ws[ref_dst]
+    if type(t).__name__ == 'MergedCell':
+        return
+    t.font = copy(s.font); t.fill = copy(s.fill); t.border = copy(s.border)
+    t.alignment = copy(s.alignment); t.number_format = s.number_format
+
+
+_REF = re.compile(r'(\$?)([A-Z]{1,3})(\$?)(\d+)')
+
+
+def _decaler(formule, off):
+    """Décale de `off` colonnes les références internes au bloc (sans nom d'onglet)."""
+    if not (isinstance(formule, str) and formule.startswith('=')):
+        return formule
+    tok = Tokenizer(formule)
+    out = []
+    for t in tok.items:
+        v = t.value
+        if t.type == 'OPERAND' and t.subtype == 'RANGE' and '!' not in v:
+            v = _REF.sub(lambda m: m.group(1) + GL(CI(m.group(2)) + off) + m.group(3) + m.group(4), v)
+        out.append(v)
+    return '=' + ''.join(out)
+
+
+def _transplanter(src, dst, off):
+    """Recopie un bloc rempli (onglet de travail du gabarit) dans le plan financier, décalé de `off` colonnes."""
+    for row in src.iter_rows(min_col=2):
+        for c in row:
+            if type(c).__name__ == 'MergedCell':
+                continue
+            t = dst.cell(c.row, c.column + off)
+            if type(t).__name__ == 'MergedCell':
+                continue
+            t.value = _decaler(c.value, off)
+            if c.has_style:
+                t.font = copy(c.font); t.fill = copy(c.fill); t.border = copy(c.border)
+                t.alignment = copy(c.alignment); t.number_format = c.number_format
+    for k, d in src.column_dimensions.items():
+        if CI(k) >= 2 and d.width:
+            dst.column_dimensions[GL(CI(k) + off)].width = d.width
 
 
 def recolorer(ws, primaire, secondaire):
@@ -93,8 +138,8 @@ def remplir(cfg, ctx):
         return f'SUMIF({M}!$A:$A,"{code} —*",{M}!{col}:{col})'
 
     # ---------------------------------------------------------------- 01 Investissements et financements initiaux
-    inv = wb['INV']; inv.title = '01_Invest & Financements'
-    y1 = years[0]; c1 = f'<={dern[y1]}'
+    inv = wb['INV']
+    y1 = years[0]; c1 = '<=2'  # financements initiaux : les 3 premiers mois (le reste figure au plan de financement)
     _ecrire(inv, 'D6', soc); _ecrire(inv, 'D7', porteur)
     _ecrire(inv, 'H9', f'Montant {dev} hors taxes'); _ecrire(inv, 'H41', f'Montant {dev} hors taxes')
     lignes = {13: [CAT['brevets']], 14: [CAT['logiciels']], 16: [CAT['terrains']], 17: [CAT['constructions']],
@@ -130,18 +175,20 @@ def remplir(cfg, ctx):
             idx = list(range(k, len(emps))) if k == 2 else [k]
             nom = emps[k]['nom'] if len(idx) == 1 else 'Autres prêts'
             _ecrire(inv, f'B{r}', f'   Prêt n°{k + 1} ({nom})' if len(idx) == 1 else '   Autres prêts')
-            _ecrire(inv, f'H{r}', '=' + '+'.join(f'IF({H}!$E${erow[j]}<={dern[y1]},{H}!$B${erow[j]},0)' for j in idx))
+            _ecrire(inv, f'H{r}', '=' + '+'.join(f'IF({H}!$E${erow[j]}<=2,{H}!$B${erow[j]},0)' for j in idx))
         else:
             _ecrire(inv, f'B{r}', f'   Prêt n°{k + 1}'); _ecrire(inv, f'H{r}', 0)
     _ecrire(inv, 'B51', 'Subvention n°1'); _ecrire(inv, 'H51', 0)
     _ecrire(inv, 'B52', 'Subvention n°2'); _ecrire(inv, 'H52', 0)
     _ecrire(inv, 'B53', "Autre financement (comptes courants d'associés)"); _ecrire(inv, 'H53', f"={H}!$B${ctx['r_cca']}")
     _ecrire(inv, 'F55', 'TOTAL RESSOURCES'); _ecrire(inv, 'H55', '=SUM(H44,H47,H51:H53)')
-    _ecrire(inv, 'B57', f"Programme de l'exercice {lab[y1]}. Les investissements des exercices suivants figurent dans le plan de financement. "
-                        f"Détail : onglet {ctx['SH']}.")
+    _ecrire(inv, 'B57', "Programme des trois premiers mois ; les investissements suivants figurent dans le plan de financement.")
+    _ecrire(inv, 'B58', f"cf dossier de travail, onglet {ctx['SH']}")
+    for r_ in (57, 58):
+        inv[f'B{r_}'].font = Font(name='Calibri', size=9, italic=True)
 
     # ---------------------------------------------------------------- 02 Compte de résultat
-    cr = wb['CR']; cr.title = '02_Compte de résultat'
+    cr = wb['CR']
     _ecrire(cr, 'B2', f'Compte de résultats prévisionnel sur {ny} ans' if ny <= 5 else f'Compte de résultats prévisionnel ({ny} exercices)')
     _ecrire(cr, 'D6', soc); _ecrire(cr, 'D7', porteur)
     ycol = [GL(6 + k) for k in range(ny)]  # F, G, H, I, J (et K si 6 exercices)
@@ -195,7 +242,7 @@ def remplir(cfg, ctx):
             _ecrire(cr, f'{col}{r}', None)
 
     # ---------------------------------------------------------------- 03 Plan de financement
-    pf = wb['PF']; pf.title = '03_Plan de financement'
+    pf = wb['PF']
     _ecrire(pf, 'B2', f'Plan de financement à {ny} ans' if ny <= 5 else f'Plan de financement ({ny} exercices)')
     _ecrire(pf, 'D6', soc); _ecrire(pf, 'D7', porteur)
     pcol = [GL(6 + k) for k in range(ny)]
@@ -227,82 +274,66 @@ def remplir(cfg, ctx):
     for r in (50,):
         _ecrire(pf, f'I{r}', None)
 
-    # ---------------------------------------------------------------- 04 Budgets de trésorerie (un onglet par exercice)
-    modele_tre = wb['TRE']
+    # ---------------------------------------------------------------- 04 Budget de trésorerie de la première année (12 mois)
+    t = wb['TRE']
     mcols = ['E', 'F', 'G', 'H', 'I', 'L', 'M', 'N', 'O', 'P', 'Q', 'R']
     r_tres = ctx['r_tres']
     codes_ext = [c for c, _ in COMPTES if c not in ('64',)]
-    tres_sheets = []
-    for k, y in enumerate(years):
-        t = wb.copy_worksheet(modele_tre); t.title = f'04_Trésorerie {y}'; tres_sheets.append(t)
-        t.print_area = modele_tre.print_area
-        t.page_setup.orientation = 'landscape'; t.page_setup.fitToWidth = 2; t.page_setup.fitToHeight = 1
-        t.sheet_properties.pageSetUpPr.fitToPage = True
-        for b_ in modele_tre.col_breaks.brk:
-            t.col_breaks.append(copy(b_))
-        _ecrire(t, 'B2', f'Budget prévisionnel de trésorerie {lab[y]}'); _ecrire(t, 'L2', f'Budget prévisionnel de trésorerie {y} (suite)')
-        for c_ in ('D6', 'N6'):
-            _ecrire(t, c_, soc)
-        for c_ in ('D7', 'N7'):
-            _ecrire(t, c_, porteur)
-        _ecrire(t, 'B11', f'Exercice {lab[y]}')
-        libs = {15: 'Apport en capital', 16: 'Emprunts', 17: 'Subventions', 18: "Autres financements (comptes courants d'associés)",
-                19: 'Ventes de produits et services', 20: 'Autres encaissements', 21: "Chiffre d'affaires (total)",
-                22: 'Immobilisations incorporelles', 23: 'Immobilisations corporelles et financières', 24: 'Immobilisations (total)',
-                25: 'Acquisition stocks', 26: "Impôt sur les bénéfices (acomptes et solde)", 27: 'Achats consommés',
-                28: 'Charges externes et autres charges', 29: 'Impôts et taxes', 30: 'Salaires employés', 31: 'Charges sociales employés',
-                32: 'Salaire dirigeant', 33: 'Charges sociales dirigeant(s)', 34: 'Total charges de personnel',
-                35: "Échéances d'emprunts (intérêts + capital)", 36: 'Total des décaissements', 37: 'Total des encaissements',
-                38: 'Solde précédent', 39: 'Solde du mois', 40: 'Solde de trésorerie (cumul)'}
-        for r, l_ in libs.items():
-            _ecrire(t, f'B{r}', l_)
-        for j, col in enumerate(mcols):
-            idx = next((i for i, (a, m) in enumerate(cal) if a == y and m == j + 1), None)
-            if idx is None:
-                for r in range(13, 42):
-                    _ecrire(t, f'{col}{r}', None)
-                continue
-            mc = GL(2 + idx)
-            _ecrire(t, f'{col}13', f'{MOIS[j]}-{str(y)[2:]}')
-            _ecrire(t, f'{col}15', f"={H}!$B${ctx['r_cap']}" if idx == 0 else 0)
-            _ecrire(t, f'{col}16', f"={M}!{mc}{ctx['r_deb']}")
-            _ecrire(t, f'{col}17', 0)
-            _ecrire(t, f'{col}18', f"={H}!$B${ctx['r_cca']}" if idx == 0 else 0)
-            _ecrire(t, f'{col}19', f"={M}!{mc}{ctx['r_ca']}")
-            _ecrire(t, f'{col}20', 0)
-            _ecrire(t, f'{col}21', f'=SUM({col}19:{col}20)')
-            _ecrire(t, f'{col}22', '=' + inv_cat(INCORP, str(idx)))
-            _ecrire(t, f'{col}23', f"={M}!{mc}{ctx['r_capex']}-{col}22")
-            _ecrire(t, f'{col}24', f'=SUM({col}22:{col}23)')
-            _ecrire(t, f'{col}25', 0)
-            _ecrire(t, f'{col}26', f"={M}!{mc}{ctx['r_imp']}")
-            _ecrire(t, f'{col}27', '=' + sumif_m('60', mc))
-            _ecrire(t, f'{col}28', '=' + '+'.join(sumif_m(c_, mc) for c_ in codes_ext))
-            _ecrire(t, f'{col}29', '=' + sumif_m('64', mc))
-            for r, code in ((30, '6611'), (31, '6641'), (32, '6612'), (33, '6642')):
-                _ecrire(t, f'{col}{r}', '=' + sumif_m(code, mc))
-            _ecrire(t, f'{col}34', f'=SUM({col}30:{col}33)')
-            _ecrire(t, f'{col}35', f"={M}!{mc}{ctx['r_serv']}")
-            _ecrire(t, f'{col}36', f'=SUM({col}24:{col}29,{col}34:{col}35)')
-            _ecrire(t, f'{col}37', f'=SUM({col}15:{col}20)')
-            prev = mcols[j - 1] if j > 0 and any(a == y and m == j for a, m in cal) else None
-            if prev:
-                _ecrire(t, f'{col}38', f'={prev}40')
-            else:
-                _ecrire(t, f'{col}38', 0 if idx == 0 else f'={M}!{GL(1 + idx)}{r_tres}')
-            _ecrire(t, f'{col}39', f'={col}37-{col}36')
-            _ecrire(t, f'{col}40', f'={col}38+{col}39')
-            _ecrire(t, f'{col}41', f'=IF({col}40<0,{col}40,"")')
-        for r in list(range(15, 38)) + [41]:
-            _ecrire(t, f'S{r}', f'=SUM(E{r}:I{r},L{r}:R{r})')
-        _ecrire(t, 'S38', None); _ecrire(t, 'S39', None)
-        lastm = mcols[cal[dern[y]][1] - 1]
-        _ecrire(t, 'S40', f'={lastm}40'); _ecrire(t, 'J41', None); _ecrire(t, 'K41', None)
-        _ecrire(t, 'B44', "Ce tableau est établi hors TVA ; il intègre les acomptes et le solde de l'impôt sur les bénéfices et les échéances des emprunts.")
-        _ecrire(t, 'B45', f"La trésorerie de fin de mois est identique à celle de l'onglet {ctx['SM']}.")
-        for c_ in ('I49', 'S49'):
-            _ecrire(t, c_, None)
-    wb.remove(modele_tre)
+    _ecrire(t, 'B2', 'Budget prévisionnel de trésorerie'); _ecrire(t, 'L2', 'Budget prévisionnel de trésorerie (suite)')
+    for c_ in ('D6', 'N6'):
+        _ecrire(t, c_, soc)
+    for c_ in ('D7', 'N7'):
+        _ecrire(t, c_, porteur)
+    _ecrire(t, 'B11', 'Première année')
+    libs = {15: 'Apport en capital', 16: 'Emprunts', 17: 'Subventions', 18: "Autres financements (comptes courants d'associés)",
+            19: 'Ventes de produits et services', 20: 'Autres encaissements', 21: "Chiffre d'affaires (total)",
+            22: 'Immobilisations incorporelles', 23: 'Immobilisations corporelles et financières', 24: 'Immobilisations (total)',
+            25: 'Acquisition stocks', 26: "Impôt sur les bénéfices (acomptes et solde)", 27: 'Achats consommés',
+            28: 'Charges externes et autres charges', 29: 'Impôts et taxes', 30: 'Salaires employés', 31: 'Charges sociales employés',
+            32: 'Salaire dirigeant', 33: 'Charges sociales dirigeant(s)', 34: 'Total charges de personnel',
+            35: "Échéances d'emprunts (intérêts + capital)", 36: 'Total des décaissements', 37: 'Total des encaissements',
+            38: 'Solde précédent', 39: 'Solde du mois', 40: 'Solde de trésorerie (cumul)'}
+    for r, l_ in libs.items():
+        _ecrire(t, f'B{r}', l_)
+    for j, col in enumerate(mcols):
+        idx = j
+        mc = GL(2 + idx)
+        a_, m_ = cal[idx]
+        _ecrire(t, f'{col}13', f'{MOIS[m_ - 1]}-{str(a_)[2:]}')
+        _ecrire(t, f'{col}15', f"={H}!$B${ctx['r_cap']}" if idx == 0 else 0)
+        _ecrire(t, f'{col}16', f"={M}!{mc}{ctx['r_deb']}")
+        _ecrire(t, f'{col}17', 0)
+        _ecrire(t, f'{col}18', f"={H}!$B${ctx['r_cca']}" if idx == 0 else 0)
+        _ecrire(t, f'{col}19', f"={M}!{mc}{ctx['r_ca']}")
+        _ecrire(t, f'{col}20', 0)
+        _ecrire(t, f'{col}21', f'=SUM({col}19:{col}20)')
+        _ecrire(t, f'{col}22', '=' + inv_cat(INCORP, str(idx)))
+        _ecrire(t, f'{col}23', f"={M}!{mc}{ctx['r_capex']}-{col}22")
+        _ecrire(t, f'{col}24', f'=SUM({col}22:{col}23)')
+        _ecrire(t, f'{col}25', 0)
+        _ecrire(t, f'{col}26', f"={M}!{mc}{ctx['r_imp']}")
+        _ecrire(t, f'{col}27', '=' + sumif_m('60', mc))
+        _ecrire(t, f'{col}28', '=' + '+'.join(sumif_m(c_, mc) for c_ in codes_ext))
+        _ecrire(t, f'{col}29', '=' + sumif_m('64', mc))
+        for r, code in ((30, '6611'), (31, '6641'), (32, '6612'), (33, '6642')):
+            _ecrire(t, f'{col}{r}', '=' + sumif_m(code, mc))
+        _ecrire(t, f'{col}34', f'=SUM({col}30:{col}33)')
+        _ecrire(t, f'{col}35', f"={M}!{mc}{ctx['r_serv']}")
+        _ecrire(t, f'{col}36', f'=SUM({col}24:{col}29,{col}34:{col}35)')
+        _ecrire(t, f'{col}37', f'=SUM({col}15:{col}20)')
+        _ecrire(t, f'{col}38', 0 if j == 0 else f'={mcols[j - 1]}40')
+        _ecrire(t, f'{col}39', f'={col}37-{col}36')
+        _ecrire(t, f'{col}40', f'={col}38+{col}39')
+        _ecrire(t, f'{col}41', f'=IF({col}40<0,{col}40,"")')
+    for r in list(range(15, 38)) + [41]:
+        _ecrire(t, f'S{r}', f'=SUM(E{r}:I{r},L{r}:R{r})')
+    _ecrire(t, 'S13', 'TOTAL')
+    _ecrire(t, 'S38', None); _ecrire(t, 'S39', None)
+    _ecrire(t, 'S40', '=R40'); _ecrire(t, 'J41', None); _ecrire(t, 'K41', None)
+    _ecrire(t, 'B44', "Ce tableau est établi hors TVA ; il intègre les acomptes et le solde de l'impôt sur les bénéfices et les échéances des emprunts.")
+    _ecrire(t, 'B45', f"Les mois suivants figurent dans l'onglet {ctx['SM']} (trésorerie de fin de mois identique).")
+    for c_ in ('I49', 'S49'):
+        _ecrire(t, c_, None)
 
     # ---------------------------------------------------------------- #68 Tableaux des immobilisations et amortissements
     modele_am = wb['AMORT']
@@ -336,7 +367,7 @@ def remplir(cfg, ctx):
                 for c_ in range(1, 13):
                     src = modele_am.cell(17, c_); dst = t.cell(rc, c_)
                     dst.font = copy(src.font); dst.fill = copy(src.fill); dst.border = copy(src.border); dst.alignment = copy(src.alignment); dst.number_format = src.number_format
-                t.cell(rc, 2, lib_.upper())
+                t.cell(rc, 2, lib_.upper()); t.cell(rc, 2).alignment = Alignment(horizontal='left', vertical='center')
                 for j, iv in items:
                     r += 1
                     for c_ in range(1, 13):
@@ -444,13 +475,128 @@ def remplir(cfg, ctx):
         bilan(nom, f'Bilan prévisionnel (clôture au {dt} avant affectation)', str(y), k)
     wb.remove(modele_b)
 
+    # ---------------------------------------------------------------- Plan financier à imprimer (un seul onglet, comme le modèle)
+    plan = wb['PLAN']; plan.title = '01_Plan financier à imprimer'
+    PL = plan
+    for bloc, off in (('INV', 9), ('CR', 29), ('PF', 66), ('TRE', 77)):
+        _transplanter(wb[bloc], PL, off)
+        wb.remove(wb[bloc])
+    contact = cfg.get('contact', {})
+    ny = len(years)
+    crc = [GL(35 + k) for k in range(ny)]          # colonnes du compte de résultat (AI…)
+
+    for c0 in ('V', 'AG', 'AR', 'BG', 'BR', 'CC', 'CM', 'M'):
+        _ecrire(PL, f'{c0}6', soc); _ecrire(PL, f'{c0}7', porteur)
+
+    # --- page de garde
+    _ecrire(PL, 'B14', f'Etude financière \nprévisionnelle sur {ny} ans')
+    _ecrire(PL, 'C23', porteur); _ecrire(PL, 'C28', soc)
+    _ecrire(PL, 'C33', contact.get('forme_juridique') or cfg['pays']['nom'])
+    _ecrire(PL, 'C42', contact.get('telephone', '')); _ecrire(PL, 'C43', contact.get('email', ''))
+    _ecrire(PL, 'C44', ', '.join(x for x in (contact.get('ville', ''), cfg['pays']['nom']) if x))
+    _ecrire(PL, 'C47', datetime.date.today()); PL['C47'].number_format = 'dd/mm/yyyy'
+    _ecrire(PL, 'H8', None)
+    if theme.get('logo'):
+        try:
+            from openpyxl.drawing.image import Image as XLImage
+            img = XLImage(theme['logo']); ratio = 60 / img.height; img.height = 60; img.width = int(img.width * ratio)
+            PL.add_image(img, 'C37')
+        except Exception:
+            pass
+
+    def etendre(cols_src, cols_dst, rows):
+        for cs, cd in zip(cols_src, cols_dst):
+            for r in rows:
+                _style_comme_entre(PL, f'{cs}{r}', f'{cd}{r}')
+
+    # --- salaires et charges sociales / détail des amortissements (colonnes X à AB)
+    sc = [GL(24 + k) for k in range(ny)]
+    etendre(['Z'] * 2, ['AA', 'AB'], list(range(13, 22)) + list(range(29, 52)))
+    _ecrire(PL, 'X9', contact.get('forme_juridique') or '')
+    _ecrire(PL, 'X10', 'Rémunéré' if any(k_.startswith('6612') for k_ in cfg['charges_fixes_mensuelles']) else 'Non rémunéré')
+    for k, col in enumerate(sc):
+        cr_ = crc[k]
+        _ecrire(PL, f'{col}13', lab[years[k]]); _ecrire(PL, f'{col}29', lab[years[k]])
+        _ecrire(PL, f'{col}15', f'={cr_}49'); _ecrire(PL, f'{col}17', f'={cr_}50')
+        _ecrire(PL, f'{col}19', f'={cr_}47'); _ecrire(PL, f'{col}21', f'={cr_}48')
+        for r in (16, 20):
+            _ecrire(PL, f'{col}{r}', '' if k == 0 else f'=IFERROR(({col}{r - 1}-{sc[k - 1]}{r - 1})/{sc[k - 1]}{r - 1},"")')
+            PL[f'{col}{r}'].number_format = '0%'
+
+        def dot(cats):
+            if not irow:
+                return 0
+            return '=' + '+'.join(f'SUMPRODUCT(({H}!$F${i0}:$F${i1}="{c}")*{I}!{GL(2 + k)}${drows[0]}:{GL(2 + k)}${drows[-1]})' for c in cats)
+        _ecrire(PL, f'{col}33', dot([CAT['brevets']])); _ecrire(PL, f'{col}34', dot([CAT['logiciels']]))
+        for j, cle in enumerate(('terrains', 'constructions', 'amenagements', 'materiel_industriel', 'agencements', 'transport', 'bureau', 'mobilier')):
+            _ecrire(PL, f'{col}{42 + j}', dot([CAT[cle]]))
+        _ecrire(PL, f'{col}31', f'=SUM({col}33:{col}39)'); _ecrire(PL, f'{col}40', f'=SUM({col}42:{col}49)')
+        _ecrire(PL, f'{col}51', f'=SUM({col}31,{col}40)')
+    for r, ref in ((33, 'K13'), (34, 'K14')):
+        _ecrire(PL, f'T{r}', f'={ref}')
+    for j in range(8):
+        _ecrire(PL, f'T{42 + j}', f'=K{16 + j}')
+    _ecrire(PL, 'T54', f"cf dossier de travail, onglet {ctx['SI']}")
+    _ecrire(PL, 'T55', f"cf dossier de travail, onglet {ctx['SR']}")
+
+    # --- soldes intermédiaires de gestion et capacité d'autofinancement (AS/AT … BA/BB)
+    vcol = [GL(45 + 2 * k) for k in range(ny)]; pcol_ = [GL(46 + 2 * k) for k in range(ny)]
+    etendre(['AW', 'AX', 'AW', 'AX'], ['AY', 'AZ', 'BA', 'BB'], range(11, 30))
+    for k, (v, pc_) in enumerate(zip(vcol, pcol_)):
+        c = crc[k]
+        _ecrire(PL, f'{v}11', lab[years[k]]); _ecrire(PL, f'{pc_}11', '%'); _ecrire(PL, f'{v}41', lab[years[k]])
+        f = {13: f'={c}10', 14: f'={c}10', 15: f'={c}14', 16: f'={v}14-{v}15', 17: f'={c}17', 18: f'={c}42',
+             19: f'={v}16-{v}17-{v}18', 20: f'={c}46', 21: f'=SUM({c}47:{c}50)', 22: f'={v}19-{v}20-{v}21',
+             23: f'={c}53', 24: f'={v}22-{v}23', 25: f'={c}52', 26: f'=-{v}25', 27: f'={v}24+{v}26',
+             28: f'={c}57', 29: f'={v}28+{v}23'}
+        for r, fo in f.items():
+            _ecrire(PL, f'{v}{r}', fo)
+            _ecrire(PL, f'{pc_}{r}', f'=IFERROR({v}{r}/{v}$14,0)'); PL[f'{pc_}{r}'].number_format = '0%'
+        _ecrire(PL, f'{v}43', f'={v}28'); _ecrire(PL, f'{v}44', f'={v}23'); _ecrire(PL, f'{v}45', f'={v}43+{v}44')
+        _ecrire(PL, f'{v}46', f'={GL(72 + k)}17'); _ecrire(PL, f'{v}47', f'={v}45-{v}46')
+    _ecrire(PL, 'AP18', 'Autres charges'); _ecrire(PL, 'AP46', ' - Remboursement emprunts')
+    _ecrire(PL, 'AP49', "Le flux de trésorerie prévisionnel que l'entreprise génère résulte de ses opérations courantes.")
+    _ecrire(PL, 'AP50', f"cf dossier de travail, onglet {ctx['SR']}")
+
+    # --- seuil de rentabilité et besoin en fonds de roulement (BI … BM)
+    scol = [GL(61 + k) for k in range(ny)]
+    etendre(['BK', 'BK'], ['BL', 'BM'], list(range(9, 22)) + list(range(34, 40)))
+    cvr_ = ctx.get('cvr', {})
+    for k, col in enumerate(scol):
+        c = crc[k]; y = years[k]
+        cv = '+'.join(f"{M}!{yc[y]}{rw}" for rw in cvr_.values()) or '0'
+        _ecrire(PL, f'{col}9', lab[y]); _ecrire(PL, f'{col}34', lab[y])
+        _ecrire(PL, f'{col}11', f'={c}10'); _ecrire(PL, f'{col}12', f'={cv}'); _ecrire(PL, f'{col}13', f'={col}12')
+        _ecrire(PL, f'{col}14', f'={col}11-{col}13'); _ecrire(PL, f'{col}15', f'=IFERROR({col}14/{col}11,0)')
+        _ecrire(PL, f'{col}16', f'={col}11-{col}13-{col}18'); _ecrire(PL, f'{col}17', f'={col}13+{col}16')
+        _ecrire(PL, f'{col}18', f'={c}54'); _ecrire(PL, f'{col}19', f'=IFERROR({col}16/{col}15,0)')
+        _ecrire(PL, f'{col}20', f'={col}11-{col}19'); _ecrire(PL, f'{col}21', f'={col}19/{nbm[y] * 25}')
+        _ecrire(PL, f'{col}36', f'={col}11/{nbm[y] * 30}*$BH36'); _ecrire(PL, f'{col}38', f'={col}12/{nbm[y] * 30}*$BH38')
+        _ecrire(PL, f'{col}39', f'={col}36-{col}38')
+        PL[f'{col}15'].number_format = '0%'
+    _ecrire(PL, 'BE16', 'Coûts fixes'); _ecrire(PL, 'BE21', "Point mort en chiffre d'affaires par jour ouvré")
+    _ecrire(PL, 'BH36', 0); _ecrire(PL, 'BH38', 0)
+    _ecrire(PL, 'BE41', "Délais de 0 jour : le prévisionnel retient des ventes encaissées et des achats payés au comptant.")
+
+    # --- plan de financement : les colonnes BT…BX viennent du bloc PF ; trésorerie : bloc TRE
+    # nettoyage des repères numériques du modèle (numéros de page)
+    for ref in ('AM59', 'AM62', 'BM49', 'CH49', 'CR49', 'BB50', 'BX50'):
+        _ecrire(PL, ref, None)
+    for col in crc + sc + vcol + scol + [GL(72 + k) for k in range(ny)]:
+        PL.column_dimensions[col].width = 15
+    for col in pcol_:
+        PL.column_dimensions[col].width = 6
+    for col in ('CD', 'CE', 'CF', 'CG', 'CH', 'CK', 'CL', 'CM', 'CN', 'CO', 'CP', 'CQ', 'CR'):
+        PL.column_dimensions[col].width = 15
+    PL.print_area = 'A1:CS62'
+
     # ---------------------------------------------------------------- Table des matières
     tdm = wb['TDM']; tdm.title = '0_Table des matières'
     _ecrire(tdm, 'B1', soc); _ecrire(tdm, 'G2', porteur); _ecrire(tdm, 'M1', ' - '.join(str(y) for y in years))
     _ecrire(tdm, 'M2', datetime.date.today()); tdm['M2'].number_format = 'dd/mm/yyyy'
     _ecrire(tdm, 'B2', 'PRÉVISIONNEL FINANCIER')
-    ordre_onglets = (['0_Table des matières', '01_Invest & Financements', '02_Compte de résultat', '03_Plan de financement']
-                     + [s.title for s in tres_sheets] + [s.title for s in am_sheets] + [s.title for s in bil_sheets]
+    ordre_onglets = (['0_Table des matières', PL.title]
+                     + [s.title for s in am_sheets] + [s.title for s in bil_sheets]
                      + [ctx['SS'], ctx['SH'], ctx['SM'], ctx['SC'], ctx['SI'], ctx['SR'], ctx['SB']])
     st = copy(tdm['B8']._style)
     for r in range(8, 40):
@@ -468,7 +614,7 @@ def remplir(cfg, ctx):
         f_ = copy(c.font); f_.sz = 12; c.font = f_; tdm.row_dimensions[8 + i].height = 18
     fin_ = 8 + len(ordre_onglets) - len(masques)
     tdm.cell(fin_, 2, f"Onglets {ctx['SH'][:2]} à {ctx['SS'][:2]} : dossier de travail (seules cellules à saisir : cases bleues de {ctx['SH']}). "
-                      "Les tableaux 01 à 6 en sont issus par formules.").font = Font(name='Calibri', size=10, italic=True)
+                      "Le plan financier, les tableaux d'amortissement et les bilans en sont issus par formules.").font = Font(name='Calibri', size=10, italic=True)
     if theme.get('marque'):
         tdm.cell(fin_ + 1, 2, theme['marque']).font = Font(name='Calibri', size=9, italic=True, color='FF808080')
     tdm.print_area = f'A1:M{fin_ + 2}'
@@ -480,15 +626,19 @@ def remplir(cfg, ctx):
         except Exception:
             pass
 
-    # mise en page : un tableau = une page (le budget de trésorerie : deux pages en largeur)
-    for ws in (wb['01_Invest & Financements'], wb['02_Compte de résultat'], wb['03_Plan de financement'], *bil_sheets, *am_sheets):
+    # mise en page : un tableau = une page (plan financier : une page par tableau, comme le modèle)
+    for ws in (*bil_sheets, *am_sheets):
         ws.sheet_properties.pageSetUpPr.fitToPage = True; ws.page_setup.fitToWidth = 1; ws.page_setup.fitToHeight = 1
-    for col in 'FGHIJK':
-        wb['03_Plan de financement'].column_dimensions[col].width = 17
-    for t in tres_sheets:
-        for col in mcols + ['S']:
-            t.column_dimensions[col].width = 15
-        t.column_dimensions['B'].width = 34
+    # comme le modèle : sauts de page manuels entre les tableaux, échelle unique choisie pour que la page la plus large tienne en A4
+    PL.sheet_properties.pageSetUpPr.fitToPage = False
+    bornes = [0] + sorted(b_.id for b_ in PL.col_breaks.brk) + [CI('CS')]
+    larg = lambda c: (PL.column_dimensions[GL(c)].width or 8.43) if not PL.column_dimensions[GL(c)].hidden else 0
+    pages_pouces = [sum(larg(c) * 7 + 5 for c in range(d + 1, f + 1)) / 96 for d, f in zip(bornes, bornes[1:])]
+    haut = sum((PL.row_dimensions[r].height or 15) for r in range(1, 63)) / 72
+    PL.page_margins.left = PL.page_margins.right = 0.2; PL.page_margins.top = 0.3; PL.page_margins.bottom = 0.3
+    PL.page_margins.header = PL.page_margins.footer = 0.15
+    PL.page_setup.scale = int(min(100, 750 / max(pages_pouces), 1050 / haut))
+    PL.page_setup.paperSize = 9; PL.page_setup.orientation = 'portrait'
 
     # ordre des onglets, couleurs, pieds de page
     wb._sheets = [wb[n] for n in ordre_onglets]

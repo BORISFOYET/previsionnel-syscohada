@@ -1,0 +1,3 @@
+Polices libres utilisées pour imprimer le plan financier en PDF (métriques compatibles avec les polices Office) :
+- Carlito (compatible Calibri) et Caladea (compatible Cambria) : SIL Open Font License 1.1.
+- Liberation Sans / Serif (compatibles Arial / Times New Roman) : SIL Open Font License 1.1.

@@ -1,7 +1,8 @@
 """Transforme les données saisies sur le site en configuration du modèle financier.
 
 Choix de modélisation (identiques dans l'Excel et dans la synthèse PDF) :
-- horizon de 60 mois à partir du mois de démarrage choisi ;
+- horizon de 5 exercices : du mois de démarrage choisi au 31 décembre de la 4e année suivante
+  (le premier exercice peut être incomplet, comme dans le modèle du cabinet) ;
 - tous les investissements sont achetés au mois indiqué (pas d'actif au bilan d'ouverture) :
   le bilan d'ouverture ne contient que la trésorerie apportée (capital + comptes courants) ;
 - prévisionnel établi hors taxes ; la TVA est affichée pour information ;
@@ -13,7 +14,8 @@ import re
 from pathlib import Path
 
 PAYS = json.loads((Path(__file__).resolve().parent.parent / 'data' / 'pays.json').read_text(encoding='utf-8'))['pays']
-NB_MOIS = 60
+NB_MOIS = 60  # maximum (démarrage en janvier)
+NB_EXERCICES = 5
 SEP = ' — '
 ACHATS = '60' + SEP + 'Achats consommés (matières et marchandises)'
 AUTRES_VAR = '605' + SEP + 'Autres coûts variables'
@@ -89,11 +91,11 @@ def normaliser_societe(nom):
     return re.sub(r'\b(SARL|SA|SAS|SASU|SUARL|SNC|GIE|ETS|ETABLISSEMENTS?)\b', '', s).strip() or s
 
 
-def volumes(depart, croissance_mensuelle, croissance_annuelle):
+def volumes(depart, croissance_mensuelle, croissance_annuelle, nb=NB_MOIS):
     """Année 1 : croissance mensuelle composée. Années 2 à 5 : le volume mensuel de chaque mois
     est celui du même mois de l'année précédente × (1 + croissance annuelle)."""
     v = []
-    for i in range(NB_MOIS):
+    for i in range(nb):
         if i < 12:
             v.append(round(depart * (1 + croissance_mensuelle) ** i, 2))
         else:
@@ -114,7 +116,8 @@ def construire_config(d):
     if not re.fullmatch(r'20\d\d-(0[1-9]|1[0-2])', debut):
         raise ErreurSaisie('Indiquez le mois de démarrage (AAAA-MM).')
     a0, m0 = map(int, debut.split('-'))
-    annees = sorted({a0 + (m0 - 1 + i) // 12 for i in range(NB_MOIS)})
+    nb = 12 * NB_EXERCICES - (m0 - 1)
+    annees = sorted({a0 + (m0 - 1 + i) // 12 for i in range(nb)})
 
     produits = []
     for p in d.get('produits', []):
@@ -128,7 +131,7 @@ def construire_config(d):
             cv[AUTRES_VAR] = _num(p.get('autres_couts'))
         produits.append({'nom': nom, 'unite': p.get('unite') or 'unité', 'prix': _num(p.get('prix')),
                          'volumes': volumes(_num(p.get('volume_depart')), _pct(p.get('croissance_mensuelle')),
-                                            _pct(p.get('croissance_annuelle'))),
+                                            _pct(p.get('croissance_annuelle')), nb),
                          'couts_variables': cv})
     if not produits:
         raise ErreurSaisie('Ajoutez au moins un produit ou service.')
@@ -168,8 +171,8 @@ def construire_config(d):
         while nom in [x['nom'] for x in ponctuelles] or nom in fixes_excel:
             nom += ' '
         mois = int(_num(f.get('mois'), 1)) - 1
-        if not 0 <= mois < NB_MOIS:
-            raise ErreurSaisie(f'Mois invalide pour le frais « {nom} ».')
+        if not 0 <= mois < nb:
+            raise ErreurSaisie(f'Mois invalide pour le frais « {nom} » (1 à {nb}).')
         ponctuelles.append({'nom': nom, 'montant': _num(f.get('montant')), 'mois': mois, 'rubrique': lib})
     if not fixes_excel and not ponctuelles and not postes:
         raise ErreurSaisie('Indiquez au moins une charge (coût variable, personnel ou charge fixe).')
@@ -179,8 +182,8 @@ def construire_config(d):
         nom = (iv.get('nom') or '').strip()
         if nom and _num(iv.get('montant')):
             mois = int(_num(iv.get('mois'), 1)) - 1
-            if not 0 <= mois < NB_MOIS:
-                raise ErreurSaisie(f'Mois d\'acquisition invalide pour « {nom} » (1 à {NB_MOIS}).')
+            if not 0 <= mois < nb:
+                raise ErreurSaisie(f'Mois d\'acquisition invalide pour « {nom} » (1 à {nb}).')
             cat = iv.get('categorie') if iv.get('categorie') in CATEGORIES else 'materiel_industriel'
             duree = int(_num(iv.get('duree'), CATEGORIES[cat][2]))
             if cat in ('terrains', 'cautions'):
@@ -196,8 +199,8 @@ def construire_config(d):
             continue
         duree = int(_num(e.get('duree'), 12)); differe = int(_num(e.get('differe'), 0))
         deb = int(_num(e.get('mois'), 1)) - 1
-        if duree <= 0 or not 0 <= deb < NB_MOIS:
-            raise ErreurSaisie('Emprunt : durée ou mois de déblocage invalide.')
+        if duree <= 0 or not 0 <= deb < nb:
+            raise ErreurSaisie(f'Emprunt : durée ou mois de déblocage invalide (mois 1 à {nb}).')
         emprunts.append({'nom': (e.get('nom') or 'Emprunt bancaire').strip(), 'montant': _num(e.get('montant')),
                          'taux_annuel': _pct(e.get('taux')), 'duree_mois': duree, 'mois_deblocage': deb,
                          'mois_premiere_echeance': deb + differe + 1, 'interets_intercalaires': 'payes'})
@@ -211,7 +214,8 @@ def construire_config(d):
             fisc[str(a)] = {'regime': 'reel', 'taux_is': pays['is'], 'minimum_ca': pays['minimum_ca']}
 
     base = {
-        'societe': societe, 'porteur': (d.get('porteur') or '').strip(), 'devise': pays['devise_libelle'], 'debut': debut, 'nb_mois': NB_MOIS,
+        'societe': societe, 'porteur': (d.get('porteur') or '').strip(), 'devise': pays['devise_libelle'], 'debut': debut, 'nb_mois': nb,
+        'contact': {k: (d.get(k) or '').strip() for k in ('forme_juridique', 'telephone', 'email', 'ville')},
         'pays': {**pays, 'code': code},
         'produits': produits, 'investissements': invs, 'charges_ponctuelles': ponctuelles,
         'financement': {'capital': capital, 'tresorerie_depart': capital + cca, 'comptes_courants': cca, 'emprunts': emprunts},

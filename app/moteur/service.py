@@ -1,4 +1,4 @@
-"""Génère les livrables (Excel en formules + synthèse PDF) à partir des données du formulaire."""
+"""Génère les livrables (Excel en formules + plan financier PDF) à partir des données du formulaire."""
 import io
 import re
 import tempfile
@@ -9,7 +9,7 @@ from . import calcul
 from .excel import generer as generer_excel
 from .cabinet import charger_gabarit, remplir as remplir_cabinet
 from .formulaire import construire_config
-from .pdf import generer_pdf
+from .rendu_pdf import imprimer
 
 
 def resultats(cfg_calc):
@@ -34,9 +34,9 @@ def generer_livrables(donnees, theme):
     slug = re.sub(r'[^A-Za-z0-9]+', '_', cfg_calc['societe']).strip('_')[:40] or 'societe'
     with tempfile.TemporaryDirectory() as tmp:
         x = Path(tmp) / f'Previsionnel_{slug}.xlsx'
-        p = Path(tmp) / f'Synthese_{slug}.pdf'
+        p = Path(tmp) / f'Plan_financier_{slug}.pdf'
         generer_excel(cfg_excel, str(x), theme, p=10, apres=remplir_cabinet, classeur=charger_gabarit())
-        generer_pdf(cfg_calc, res, str(p), theme)
+        imprimer(x, p, theme)
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
             z.write(x, x.name); z.write(p, p.name)

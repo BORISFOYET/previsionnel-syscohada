@@ -10,6 +10,7 @@ import sys
 from copy import copy
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import column_index_from_string as CI, get_column_letter as GL
+from openpyxl.styles import Side
 from openpyxl.worksheet.pagebreak import Break, ColBreak
 
 BLOCS = {  # nom : (onglet du modèle, 1re colonne, dernière colonne, 1re ligne, dernière ligne)
@@ -18,10 +19,11 @@ BLOCS = {  # nom : (onglet du modèle, 1re colonne, dernière colonne, 1re ligne
     'CR': ('02_Plan financier à imprimer', 'AE', 'AN', 1, 62),
     'PF': ('02_Plan financier à imprimer', 'BP', 'BY', 1, 62),
     'TRE': ('02_Plan financier à imprimer', 'CA', 'CS', 1, 62),
+    'PLAN': ('02_Plan financier à imprimer', 'A', 'CS', 1, 62),
     'AMORT': ('#68 Tabl amort 2025', 'A', 'L', 1, 85),
     'BILAN': ('6_Bilan Prévisionnel 010125', 'A', 'K', 1, 53),
 }
-DECALAGE = {'TDM': 0, 'AMORT': 0, 'BILAN': 0}  # les autres blocs commencent en colonne B
+DECALAGE = {'TDM': 0, 'AMORT': 0, 'BILAN': 0, 'PLAN': 0}  # les autres blocs commencent en colonne B
 
 
 def copier(src, dst, a, b, r0, r1, dec):
@@ -49,7 +51,17 @@ def copier(src, dst, a, b, r0, r1, dec):
                 for cc in range(m.min_col, m.max_col + 1):
                     s = src.cell(rr, cc); t = dst.cell(rr, cc - off)
                     if s.has_style:
-                        t.border = copy(s.border)
+                        b = copy(s.border)
+                        # pas de trait à l'intérieur d'une cellule fusionnée (il barrerait le texte)
+                        if rr < m.max_row:
+                            b.bottom = Side()
+                        if rr > m.min_row:
+                            b.top = Side()
+                        if cc < m.max_col:
+                            b.right = Side()
+                        if cc > m.min_col:
+                            b.left = Side()
+                        t.border = b
     for c in range(c0, c1 + 1):
         k = GL(c)
         if k in src.column_dimensions:
@@ -78,6 +90,10 @@ def main(modele, sortie):
     tre = wb['TRE']; tre.page_setup.fitToWidth = 2; tre.page_setup.orientation = 'landscape'
     tre.col_breaks.append(Break(id=CI('CI') - (CI('CA') - 2)))
     wb['CR'].page_setup.orientation = 'portrait'
+    plan = wb['PLAN']; srcp = src['02_Plan financier à imprimer']
+    for b_ in srcp.col_breaks.brk:
+        plan.col_breaks.append(Break(id=b_.id))
+    plan.page_setup.fitToWidth = 0; plan.page_setup.fitToHeight = 1; plan.page_setup.orientation = 'portrait'
     wb.save(sortie)
     print('ok', wb.sheetnames)
 

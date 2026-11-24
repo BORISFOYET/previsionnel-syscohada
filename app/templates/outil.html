@@ -3,7 +3,7 @@
 {% block entete %}<a href="/deconnexion">Se déconnecter</a>{% endblock %}
 {% block contenu %}
 <h1>Mon prévisionnel financier</h1>
-<p class="sous">Remplissez les rubriques, puis téléchargez votre prévisionnel Excel (en formules, modifiable) et sa synthèse PDF. Les montants sont hors taxes, dans la devise du pays.</p>
+<p class="sous">Remplissez les rubriques, puis téléchargez votre prévisionnel Excel (en formules, modifiable) et le plan financier en PDF. Les montants sont hors taxes, dans la devise du pays.</p>
 {% if societe_liee %}<div class="info">Cette licence est liée à la société <b>{{ societe_liee }}</b>. Vous pouvez régénérer son prévisionnel autant de fois que nécessaire.</div>{% endif %}
 
 <form id="f" novalidate>
@@ -11,6 +11,10 @@
   <div class="grille">
     <div><label>Raison sociale</label><input id="societe" required placeholder="Ex. AGRO PLUS SARL"></div>
     <div><label>Porteur de projet</label><input id="porteur" placeholder="Ex. Jean Mbarga"></div>
+    <div><label>Forme juridique <small>(facultatif)</small></label><input id="forme_juridique" placeholder="Ex. SARL"></div>
+    <div><label>Ville <small>(facultatif)</small></label><input id="ville" placeholder="Ex. Douala"></div>
+    <div><label>Téléphone <small>(facultatif)</small></label><input id="telephone"></div>
+    <div><label>E-mail <small>(facultatif)</small></label><input id="email" type="email"></div>
     <div><label>Pays</label><select id="pays" required><option value="">Choisir…</option>{% for p in pays %}<option value="{{ p.code }}">{{ p.nom }}</option>{% endfor %}</select></div>
     <div><label>Mois de démarrage</label><input id="debut" type="month" required></div>
   </div>
@@ -42,7 +46,7 @@
 </details>
 
 <details class="carte"><summary><span class="num">6</span><h2>Investissements</h2></summary>
-  <p class="aide">La catégorie détermine la ligne du bilan et propose une durée d'amortissement usuelle, que vous pouvez modifier (0 pour un terrain ou une caution, qui ne s'amortissent pas). Le mois d'achat va de 1 (premier mois) à 60.</p>
+  <p class="aide">La catégorie détermine la ligne du bilan et propose une durée d'amortissement usuelle, que vous pouvez modifier (0 pour un terrain ou une caution, qui ne s'amortissent pas). Le mois d'achat va de 1 (premier mois) à la fin du 5e exercice (60 si vous démarrez en janvier).</p>
   <div class="lignes" id="investissements"></div>
   <button type="button" class="ajout" data-ajout="inv">+ Ajouter un investissement</button>
 </details>
@@ -77,7 +81,7 @@
 
 <div id="message"></div>
 <div id="resume" class="carte resume" hidden></div>
-<div class="pied"><button class="bouton" id="go" type="submit">Générer mon prévisionnel</button><span class="aide" style="margin:0">Fichier .zip : Excel + PDF</span></div>
+<div class="pied"><button class="bouton" id="go" type="submit">Générer mon prévisionnel</button><span class="aide" style="margin:0">Fichier .zip : Excel + plan financier PDF</span></div>
 </form>
 
 <script>
@@ -87,9 +91,9 @@ const modeles = {
   produit: [['nom','Produit ou service','text',''],['unite','Unité','text','unité'],['prix','Prix de vente HT','num','10000'],['volume_depart','Volume du 1er mois','num','100'],['croissance_mensuelle','Croissance mensuelle année 1 (%)','num','3'],['croissance_annuelle','Croissance annuelle ans 2 à 5 (%)','num','10'],['cout_achat','Coût d\'achat unitaire','num','5000'],['autres_couts','Autres coûts variables unitaires','num','0']],
   perso: [['poste','Poste','text',''],['effectif','Effectif','num','1'],['salaire','Salaire brut mensuel','num','150000'],['dirigeant','Dirigeant','case','']],
   charge: [['compte','Compte SYSCOHADA','liste:comptes','638'],['nom','Libellé (facultatif)','text',''],['montant','Montant mensuel','num','0']],
-  frais: [['type','Type de frais','liste:frais','etudes'],['nom','Libellé (facultatif)','text',''],['montant','Montant HT','num','0'],['mois','Mois (1 à 60)','num','1']],
-  inv: [['categorie','Catégorie','liste:categories','materiel_industriel'],['nom','Bien','text',''],['montant','Montant HT','num','0'],['duree','Durée d\'amortissement (ans)','num','5'],['mois','Mois d\'achat (1 à 60)','num','1']],
-  emp: [['nom','Libellé','text','Emprunt bancaire'],['montant','Montant','num','0'],['taux','Taux annuel (%)','num','12'],['duree','Durée (mois)','num','36'],['differe','Différé (mois)','num','0'],['mois','Mois de déblocage (1 à 60)','num','1']]
+  frais: [['type','Type de frais','liste:frais','etudes'],['nom','Libellé (facultatif)','text',''],['montant','Montant HT','num','0'],['mois','Mois (1 à 60 max.)','num','1']],
+  inv: [['categorie','Catégorie','liste:categories','materiel_industriel'],['nom','Bien','text',''],['montant','Montant HT','num','0'],['duree','Durée d\'amortissement (ans)','num','5'],['mois','Mois d\'achat (1 à 60 max.)','num','1']],
+  emp: [['nom','Libellé','text','Emprunt bancaire'],['montant','Montant','num','0'],['taux','Taux annuel (%)','num','12'],['duree','Durée (mois)','num','36'],['differe','Différé (mois)','num','0'],['mois','Mois de déblocage (1 à 60 max.)','num','1']]
 };
 const zones = {produit:'produits', perso:'personnel', charge:'charges', frais:'frais', inv:'investissements', emp:'emprunts'};
 const classes = {produit:'l-produit', perso:'l-perso', charge:'l-charge', frais:'l-charge', inv:'l-inv', emp:'l-emp'};
@@ -149,7 +153,7 @@ const fmt = x => Math.round(x).toLocaleString('fr-FR');
 $('f').onsubmit = async e => {
   e.preventDefault();
   const m = $('message'); m.innerHTML = '';
-  const donnees = {societe: $('societe').value, porteur: $('porteur').value, pays: $('pays').value, debut: $('debut').value,
+  const donnees = {societe: $('societe').value, porteur: $('porteur').value, forme_juridique: $('forme_juridique').value, ville: $('ville').value, telephone: $('telephone').value, email: $('email').value, pays: $('pays').value, debut: $('debut').value,
     produits: lignes('produit'), personnel: lignes('perso'), charges_fixes: lignes('charge'), frais_demarrage: lignes('frais'), investissements: lignes('inv'),
     capital: $('capital').value, comptes_courants: $('comptes_courants').value, emprunts: lignes('emp'),
     regime_annee1: $('regime_annee1').value, montant_forfait: $('montant_forfait').value};
