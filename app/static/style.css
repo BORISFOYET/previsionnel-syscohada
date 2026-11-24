@@ -44,3 +44,6 @@ input[type=color]{height:44px;padding:4px}
 .pied{position:sticky;bottom:0;background:rgba(247,245,252,.95);padding:14px 0;border-top:1px solid var(--bord);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
 footer{text-align:center;color:var(--gris);font-size:13px;padding:24px 16px}
 @media (max-width:600px){h1{font-size:23px}.carte{padding:16px}}
+.ligne .case{display:flex;flex-direction:column;align-items:flex-start}
+.ligne .case input{width:22px;height:22px;margin:8px 0}
+.ligne select{width:100%}

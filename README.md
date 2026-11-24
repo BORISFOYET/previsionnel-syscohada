@@ -35,6 +35,18 @@ Les deux documents prennent le logo, les deux couleurs et la police choisis par 
    - `SECRET_KEY` : généré automatiquement.
 3. Optionnel : brancher un nom de domaine (ex. `previsionnel.accounts…`).
 
+## Mise en ligne (Vercel, au choix)
+
+1. Créer un compte sur vercel.com, « Add New » → « Project », importer ce dépôt GitHub. Aucune commande de build
+   à saisir : `vercel.json` route tout le site vers `api/index.py` (fonction Python, 60 s maximum par génération).
+2. Dans « Settings » → « Environment Variables », ajouter `CHARIOW_API_KEY`, `URL_BOUTIQUE`, `MARQUE` et
+   `SECRET_KEY` (une longue chaîne aléatoire, à générer soi-même, par exemple avec `openssl rand -hex 32`).
+3. Redéployer pour prendre en compte les variables.
+
+Le plan gratuit Hobby fonctionne techniquement, mais les conditions de Vercel le réservent à un usage personnel
+et non commercial. Pour un site qui livre un produit payant, prévoir le plan Pro (20 $/mois) dès que les ventes
+sont régulières, ou Render (environ 7 $/mois).
+
 ## Développement local
 
 ```bash

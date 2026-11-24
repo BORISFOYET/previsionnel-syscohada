@@ -10,6 +10,7 @@
 <details class="carte" open><summary><span class="num">1</span><h2>Votre société</h2></summary>
   <div class="grille">
     <div><label>Raison sociale</label><input id="societe" required placeholder="Ex. AGRO PLUS SARL"></div>
+    <div><label>Porteur de projet</label><input id="porteur" placeholder="Ex. Jean Mbarga"></div>
     <div><label>Pays</label><select id="pays" required><option value="">Choisir…</option>{% for p in pays %}<option value="{{ p.code }}">{{ p.nom }}</option>{% endfor %}</select></div>
     <div><label>Mois de démarrage</label><input id="debut" type="month" required></div>
   </div>
@@ -23,24 +24,30 @@
 </details>
 
 <details class="carte"><summary><span class="num">3</span><h2>Personnel</h2></summary>
-  <p class="aide">Salaires bruts mensuels. Les charges sociales patronales du pays sont ajoutées automatiquement.</p>
+  <p class="aide">Salaires bruts mensuels. Les charges sociales patronales du pays sont ajoutées automatiquement. Cochez « Dirigeant » pour la rémunération du gérant, présentée à part dans le compte de résultat.</p>
   <div class="lignes" id="personnel"></div>
   <button type="button" class="ajout" data-ajout="perso">+ Ajouter un poste</button>
 </details>
 
 <details class="carte"><summary><span class="num">4</span><h2>Charges fixes mensuelles</h2></summary>
-  <p class="aide">Montants par mois, hors salaires. Laissez à 0 ce qui ne vous concerne pas.</p>
+  <p class="aide">Montants par mois, hors salaires. Choisissez le compte SYSCOHADA de chaque charge : il détermine sa ligne dans le compte de résultat. Laissez à 0 ce qui ne vous concerne pas.</p>
   <div class="lignes" id="charges"></div>
   <button type="button" class="ajout" data-ajout="charge">+ Ajouter une charge</button>
 </details>
 
-<details class="carte"><summary><span class="num">5</span><h2>Investissements</h2></summary>
-  <p class="aide">Durée d'amortissement en années (0 pour un terrain, qui ne s'amortit pas). Le mois d'achat va de 1 (premier mois) à 60.</p>
+<details class="carte"><summary><span class="num">5</span><h2>Frais de démarrage</h2></summary>
+  <p class="aide">Dépenses payées une seule fois au lancement (études, création de société, cautions administratives, enseigne…). Elles sont comptées en charges du mois indiqué.</p>
+  <div class="lignes" id="frais"></div>
+  <button type="button" class="ajout" data-ajout="frais">+ Ajouter un frais</button>
+</details>
+
+<details class="carte"><summary><span class="num">6</span><h2>Investissements</h2></summary>
+  <p class="aide">La catégorie détermine la ligne du bilan et propose une durée d'amortissement usuelle, que vous pouvez modifier (0 pour un terrain ou une caution, qui ne s'amortissent pas). Le mois d'achat va de 1 (premier mois) à 60.</p>
   <div class="lignes" id="investissements"></div>
   <button type="button" class="ajout" data-ajout="inv">+ Ajouter un investissement</button>
 </details>
 
-<details class="carte"><summary><span class="num">6</span><h2>Financement</h2></summary>
+<details class="carte"><summary><span class="num">7</span><h2>Financement</h2></summary>
   <div class="grille">
     <div><label>Capital social apporté</label><input id="capital" inputmode="decimal" value="1000000"></div>
     <div><label>Comptes courants d'associés <small>(avances des associés)</small></label><input id="comptes_courants" inputmode="decimal" value="0"></div>
@@ -50,7 +57,7 @@
   <button type="button" class="ajout" data-ajout="emp">+ Ajouter un emprunt</button>
 </details>
 
-<details class="carte"><summary><span class="num">7</span><h2>Fiscalité de la première année</h2></summary>
+<details class="carte"><summary><span class="num">8</span><h2>Fiscalité de la première année</h2></summary>
   <div class="grille">
     <div><label>Régime la première année</label><select id="regime_annee1"><option value="reel">Régime du réel (impôt sur les sociétés)</option><option value="forfait">Impôt forfaitaire / synthétique</option></select></div>
     <div id="blocForfait" hidden><label>Montant annuel de l'impôt forfaitaire</label><input id="montant_forfait" inputmode="decimal" value="0"></div>
@@ -58,11 +65,11 @@
   <p class="aide">Les années suivantes sont au régime du réel avec l'impôt sur les sociétés et le minimum de perception du pays choisi.</p>
 </details>
 
-<details class="carte"><summary><span class="num">8</span><h2>Personnalisation</h2></summary>
+<details class="carte"><summary><span class="num">9</span><h2>Personnalisation</h2></summary>
   <div class="grille">
     <div><label>Logo <small>PNG ou JPG, 3 Mo max.</small></label><input type="file" id="logo" accept="image/png,image/jpeg"></div>
-    <div><label>Couleur principale</label><input type="color" id="primaire" value="#1F4E79"></div>
-    <div><label>Couleur secondaire</label><input type="color" id="secondaire" value="#F2A900"></div>
+    <div><label>Couleur principale</label><input type="color" id="primaire" value="#8B4513"></div>
+    <div><label>Couleur secondaire</label><input type="color" id="secondaire" value="#DDD4B9"></div>
     <div><label>Police</label><select id="police">{% for p in polices %}<option>{{ p }}</option>{% endfor %}</select></div>
   </div>
   <div class="apercu"><span id="ap1">Titre de tableau</span><span id="ap2">Ligne de section</span></div>
@@ -75,31 +82,49 @@
 
 <script>
 const PAYS = {{ pays_json|safe }};
+const LISTES = {{ listes_json|safe }};
 const modeles = {
   produit: [['nom','Produit ou service','text',''],['unite','Unité','text','unité'],['prix','Prix de vente HT','num','10000'],['volume_depart','Volume du 1er mois','num','100'],['croissance_mensuelle','Croissance mensuelle année 1 (%)','num','3'],['croissance_annuelle','Croissance annuelle ans 2 à 5 (%)','num','10'],['cout_achat','Coût d\'achat unitaire','num','5000'],['autres_couts','Autres coûts variables unitaires','num','0']],
-  perso: [['poste','Poste','text',''],['effectif','Effectif','num','1'],['salaire','Salaire brut mensuel','num','150000']],
-  charge: [['nom','Charge','text',''],['montant','Montant mensuel','num','0']],
-  inv: [['nom','Bien','text',''],['montant','Montant HT','num','0'],['duree','Durée d\'amortissement (ans)','num','5'],['mois','Mois d\'achat (1 à 60)','num','1']],
+  perso: [['poste','Poste','text',''],['effectif','Effectif','num','1'],['salaire','Salaire brut mensuel','num','150000'],['dirigeant','Dirigeant','case','']],
+  charge: [['compte','Compte SYSCOHADA','liste:comptes','638'],['nom','Libellé (facultatif)','text',''],['montant','Montant mensuel','num','0']],
+  frais: [['type','Type de frais','liste:frais','etudes'],['nom','Libellé (facultatif)','text',''],['montant','Montant HT','num','0'],['mois','Mois (1 à 60)','num','1']],
+  inv: [['categorie','Catégorie','liste:categories','materiel_industriel'],['nom','Bien','text',''],['montant','Montant HT','num','0'],['duree','Durée d\'amortissement (ans)','num','5'],['mois','Mois d\'achat (1 à 60)','num','1']],
   emp: [['nom','Libellé','text','Emprunt bancaire'],['montant','Montant','num','0'],['taux','Taux annuel (%)','num','12'],['duree','Durée (mois)','num','36'],['differe','Différé (mois)','num','0'],['mois','Mois de déblocage (1 à 60)','num','1']]
 };
-const zones = {produit:'produits', perso:'personnel', charge:'charges', inv:'investissements', emp:'emprunts'};
-const classes = {produit:'l-produit', perso:'l-perso', charge:'l-charge', inv:'l-inv', emp:'l-emp'};
+const zones = {produit:'produits', perso:'personnel', charge:'charges', frais:'frais', inv:'investissements', emp:'emprunts'};
+const classes = {produit:'l-produit', perso:'l-perso', charge:'l-charge', frais:'l-charge', inv:'l-inv', emp:'l-emp'};
 function ajouter(type, valeurs={}) {
   const d = document.createElement('div'); d.className = 'ligne ' + classes[type]; d.dataset.type = type;
   for (const [k, lib, t, def] of modeles[type]) {
     const w = document.createElement('div'); const l = document.createElement('label'); l.textContent = lib;
-    const i = document.createElement('input'); i.name = k; i.value = valeurs[k] ?? def;
-    if (t === 'num') i.inputMode = 'decimal';
-    w.append(l, i); d.append(w);
+    let i;
+    if (t.startsWith('liste:')) {
+      i = document.createElement('select');
+      for (const [code, libelle] of LISTES[t.slice(6)]) { const o = document.createElement('option'); o.value = code; o.textContent = t === 'liste:comptes' ? `${code} · ${libelle}` : libelle; i.append(o); }
+      i.value = valeurs[k] ?? def;
+    } else if (t === 'case') {
+      i = document.createElement('input'); i.type = 'checkbox'; i.checked = !!valeurs[k]; w.className = 'case';
+    } else {
+      i = document.createElement('input'); i.value = valeurs[k] ?? def;
+      if (t === 'num') i.inputMode = 'decimal';
+    }
+    i.name = k; w.append(l, i); d.append(w);
+  }
+  if (type === 'inv') {
+    const cat = d.querySelector('[name=categorie]'), du = d.querySelector('[name=duree]');
+    cat.onchange = () => { du.value = LISTES.categories.find(c => c[0] === cat.value)[2]; };
+    if (valeurs.duree === undefined) cat.onchange();
   }
   const x = document.createElement('button'); x.type = 'button'; x.className = 'suppr'; x.textContent = '×'; x.title = 'Supprimer'; x.onclick = () => d.remove();
   d.append(x); document.getElementById(zones[type]).append(d);
 }
 document.querySelectorAll('[data-ajout]').forEach(b => b.onclick = () => ajouter(b.dataset.ajout));
 ajouter('produit', {nom: 'Produit principal'});
-ajouter('perso', {poste: 'Gérant'});
-for (const c of ['Loyer', 'Électricité et eau', 'Téléphone et internet', 'Transport et déplacements', 'Assurances', 'Honoraires comptables', 'Marketing et publicité', 'Entretien et réparations', 'Fournitures de bureau']) ajouter('charge', {nom: c});
-for (const [n, d] of [['Matériel informatique', 3], ['Mobilier de bureau', 5], ['Aménagements', 10]]) ajouter('inv', {nom: n, duree: d});
+ajouter('perso', {poste: 'Gérant', dirigeant: true, salaire: '300000'});
+ajouter('perso', {poste: 'Employé'});
+for (const [c, n] of [['622', 'Loyer'], ['605', 'Électricité et eau'], ['628', 'Téléphone et internet'], ['618', 'Transport et déplacements'], ['625', 'Assurances'], ['632', 'Honoraires comptables'], ['627', 'Marketing et publicité'], ['624', 'Entretien et réparations'], ['604', 'Fournitures de bureau']]) ajouter('charge', {compte: c, nom: n});
+for (const t of ['etudes', 'creation']) ajouter('frais', {type: t});
+for (const [c, n] of [['bureau', 'Matériel informatique'], ['mobilier', 'Mobilier de bureau'], ['amenagements', 'Aménagements']]) ajouter('inv', {categorie: c, nom: n});
 const now = new Date(); document.getElementById('debut').value = `${now.getFullYear() + (now.getMonth() >= 10 ? 1 : 0)}-${String(now.getMonth() >= 10 ? 1 : now.getMonth() + 2).padStart(2, '0')}`;
 
 const $ = id => document.getElementById(id);
@@ -118,14 +143,14 @@ function apercu() {
 ['primaire', 'secondaire', 'police'].forEach(i => $(i).oninput = apercu); apercu();
 
 function lignes(type) {
-  return [...document.querySelectorAll(`[data-type=${type}]`)].map(d => Object.fromEntries([...d.querySelectorAll('input')].map(i => [i.name, i.value])));
+  return [...document.querySelectorAll(`[data-type=${type}]`)].map(d => Object.fromEntries([...d.querySelectorAll('input,select')].map(i => [i.name, i.type === 'checkbox' ? i.checked : i.value])));
 }
 const fmt = x => Math.round(x).toLocaleString('fr-FR');
 $('f').onsubmit = async e => {
   e.preventDefault();
   const m = $('message'); m.innerHTML = '';
-  const donnees = {societe: $('societe').value, pays: $('pays').value, debut: $('debut').value,
-    produits: lignes('produit'), personnel: lignes('perso'), charges_fixes: lignes('charge'), investissements: lignes('inv'),
+  const donnees = {societe: $('societe').value, porteur: $('porteur').value, pays: $('pays').value, debut: $('debut').value,
+    produits: lignes('produit'), personnel: lignes('perso'), charges_fixes: lignes('charge'), frais_demarrage: lignes('frais'), investissements: lignes('inv'),
     capital: $('capital').value, comptes_courants: $('comptes_courants').value, emprunts: lignes('emp'),
     regime_annee1: $('regime_annee1').value, montant_forfait: $('montant_forfait').value};
   const fd = new FormData(); fd.append('donnees', JSON.stringify(donnees));

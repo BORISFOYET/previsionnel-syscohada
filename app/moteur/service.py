@@ -7,6 +7,7 @@ from pathlib import Path
 
 from . import calcul
 from .excel import generer as generer_excel
+from .cabinet import charger_gabarit, remplir as remplir_cabinet
 from .formulaire import construire_config
 from .pdf import generer_pdf
 
@@ -34,7 +35,7 @@ def generer_livrables(donnees, theme):
     with tempfile.TemporaryDirectory() as tmp:
         x = Path(tmp) / f'Previsionnel_{slug}.xlsx'
         p = Path(tmp) / f'Synthese_{slug}.pdf'
-        generer_excel(cfg_excel, str(x), theme)
+        generer_excel(cfg_excel, str(x), theme, p=10, apres=remplir_cabinet, classeur=charger_gabarit())
         generer_pdf(cfg_calc, res, str(p), theme)
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:

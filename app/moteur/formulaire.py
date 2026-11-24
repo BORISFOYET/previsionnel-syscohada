@@ -14,8 +14,52 @@ from pathlib import Path
 
 PAYS = json.loads((Path(__file__).resolve().parent.parent / 'data' / 'pays.json').read_text(encoding='utf-8'))['pays']
 NB_MOIS = 60
-SALAIRES = 'Salaires bruts du personnel'
-CHARGES_SOC = 'Charges sociales patronales'
+SEP = ' — '
+ACHATS = '60' + SEP + 'Achats consommés (matières et marchandises)'
+AUTRES_VAR = '605' + SEP + 'Autres coûts variables'
+SAL_EMP = '6611' + SEP + 'Salaires bruts des employés'
+CS_EMP = '6641' + SEP + 'Charges sociales patronales (employés)'
+SAL_DIR = '6612' + SEP + 'Rémunération brute du dirigeant'
+CS_DIR = '6642' + SEP + 'Charges sociales patronales (dirigeant)'
+
+# Comptes de charges proposés (plan SYSCOHADA révisé), dans l'ordre du compte de résultat du modèle
+COMPTES = [
+    ('604', 'Achats stockés de matières et fournitures consommables'), ('605', 'Autres achats'), ('608', "Achats d'emballages"),
+    ('611', 'Transports sur achats'), ('612', 'Transports sur ventes'), ('613', 'Transports pour le compte de tiers'),
+    ('614', 'Transports du personnel'), ('616', 'Transports de plis'), ('618', 'Autres frais de transport (voyages et déplacements)'),
+    ('621', 'Sous-traitance générale'), ('622', 'Locations et charges locatives'), ('623', 'Redevances de crédit-bail et contrats assimilés'),
+    ('624', 'Entretien, réparations et maintenance'), ('625', "Primes d'assurance"), ('626', 'Études, recherches et documentation'),
+    ('627', 'Publicité, publications, relations publiques'), ('628', 'Frais de télécommunications'), ('631', 'Frais bancaires'),
+    ('632', "Rémunérations d'intermédiaires et de conseils"), ('633', 'Frais de formation du personnel'),
+    ('634', 'Redevances pour brevets, licences, logiciels et droits similaires'), ('635', 'Cotisations'),
+    ('637', "Rémunérations de personnel extérieur à l'entreprise"), ('638', 'Autres charges externes'),
+    ('65', 'Autres charges'), ('64', 'Impôts et taxes (patente, taxes locales…)'),
+]
+LIB_COMPTE = dict(COMPTES)
+
+# Frais de démarrage : charges de la première période (non immobilisées en SYSCOHADA révisé)
+FRAIS_DEMARRAGE = {
+    'etudes': ('626', 'Études et recherches préliminaires'), 'consultants': ('632', 'Consultants et prestataires'),
+    'permis': ('64', "Frais d'obtention de permis et autorisations"), 'formation': ('633', 'Formation et développement'),
+    'communication': ('627', 'Enseigne et éléments de communication'), 'notaire': ('632', "Honoraires, frais de notaire ou d'avocat"),
+    'experts': ('632', 'Honoraires autres experts'), 'compteurs': ('605', "Frais d'ouverture de compteurs"),
+    'creation': ('64', "Frais d'enregistrement et de création de société"),
+}
+
+# Catégories d'immobilisations : (libellé, groupe du bilan, durée d'amortissement par défaut en années)
+CATEGORIES = {
+    'brevets': ('Brevets et propriété intellectuelle', 'Immobilisations incorporelles', 5),
+    'logiciels': ('Logiciels, site internet et ERP', 'Immobilisations incorporelles', 3),
+    'terrains': ('Terrains', 'Immobilisations corporelles', 0),
+    'constructions': ('Constructions', 'Immobilisations corporelles', 20),
+    'amenagements': ('Aménagements et installations', 'Immobilisations corporelles', 10),
+    'materiel_industriel': ('Matériel et outillage industriel, agricole et commercial', 'Immobilisations corporelles', 5),
+    'agencements': ('Agencement et aménagement du matériel', 'Immobilisations corporelles', 10),
+    'transport': ('Matériel de transport', 'Immobilisations corporelles', 4),
+    'bureau': ('Matériel de bureau et matériel informatique', 'Immobilisations corporelles', 3),
+    'mobilier': ('Mobilier', 'Immobilisations corporelles', 10),
+    'cautions': ('Dépôts et cautionnements versés', 'Immobilisations financières', 0),
+}
 
 
 class ErreurSaisie(ValueError):
@@ -79,9 +123,9 @@ def construire_config(d):
             continue
         cv = {}
         if _num(p.get('cout_achat')):
-            cv['Achats et matières consommés'] = _num(p.get('cout_achat'))
+            cv[ACHATS] = _num(p.get('cout_achat'))
         if _num(p.get('autres_couts')):
-            cv['Autres coûts variables'] = _num(p.get('autres_couts'))
+            cv[AUTRES_VAR] = _num(p.get('autres_couts'))
         produits.append({'nom': nom, 'unite': p.get('unite') or 'unité', 'prix': _num(p.get('prix')),
                          'volumes': volumes(_num(p.get('volume_depart')), _pct(p.get('croissance_mensuelle')),
                                             _pct(p.get('croissance_annuelle'))),
@@ -89,25 +133,46 @@ def construire_config(d):
     if not produits:
         raise ErreurSaisie('Ajoutez au moins un produit ou service.')
     # tous les produits doivent connaître tous les postes de coûts variables
-    postes = sorted({k for p in produits for k in p['couts_variables']})
+    postes = [k for k in (ACHATS, AUTRES_VAR) if any(k in p['couts_variables'] for p in produits)]
     for p in produits:
         for k in postes:
             p['couts_variables'].setdefault(k, 0.0)
 
-    masse = sum(_num(x.get('effectif'), 1) * _num(x.get('salaire')) for x in d.get('personnel', []))
     fixes_excel, fixes_calc = {}, {}
-    if masse:
-        fixes_excel[SALAIRES] = masse
-        fixes_excel[CHARGES_SOC] = {'taux_sur': SALAIRES}
-        fixes_calc[SALAIRES] = masse
-        fixes_calc[CHARGES_SOC] = masse * pays['charges_sociales_employeur']
+    for dirigeant, sal, cs in ((False, SAL_EMP, CS_EMP), (True, SAL_DIR, CS_DIR)):
+        masse = sum(_num(x.get('effectif'), 1) * _num(x.get('salaire')) for x in d.get('personnel', [])
+                    if bool(x.get('dirigeant')) == dirigeant)
+        if masse:
+            fixes_excel[sal] = fixes_calc[sal] = masse
+            fixes_excel[cs] = {'taux_sur': sal}
+            fixes_calc[cs] = masse * pays['charges_sociales_employeur']
     for c in d.get('charges_fixes', []):
-        nom = (c.get('nom') or '').strip()
-        if nom and _num(c.get('montant')):
-            k = nom
+        compte = str(c.get('compte') or '638')
+        if compte not in LIB_COMPTE:
+            raise ErreurSaisie(f'Compte de charge inconnu : {compte}')
+        nom = (c.get('nom') or '').strip() or LIB_COMPTE[compte]
+        if _num(c.get('montant')):
+            k = compte + SEP + nom
             while k in fixes_excel:
                 k += ' '
             fixes_excel[k] = fixes_calc[k] = _num(c.get('montant'))
+    ponctuelles = []
+    for f in d.get('frais_demarrage', []):
+        if not _num(f.get('montant')):
+            continue
+        t = f.get('type') or 'autre'
+        if t != 'autre' and t not in FRAIS_DEMARRAGE:
+            raise ErreurSaisie(f'Type de frais de démarrage inconnu : {t}')
+        code, lib = FRAIS_DEMARRAGE.get(t, ('638', 'Autres frais de démarrage'))
+        nom = code + SEP + ((f.get('nom') or '').strip() or lib) + ' (frais de démarrage)'
+        while nom in [x['nom'] for x in ponctuelles] or nom in fixes_excel:
+            nom += ' '
+        mois = int(_num(f.get('mois'), 1)) - 1
+        if not 0 <= mois < NB_MOIS:
+            raise ErreurSaisie(f'Mois invalide pour le frais « {nom} ».')
+        ponctuelles.append({'nom': nom, 'montant': _num(f.get('montant')), 'mois': mois, 'rubrique': lib})
+    if not fixes_excel and not ponctuelles and not postes:
+        raise ErreurSaisie('Indiquez au moins une charge (coût variable, personnel ou charge fixe).')
 
     invs = []
     for iv in d.get('investissements', []):
@@ -116,8 +181,12 @@ def construire_config(d):
             mois = int(_num(iv.get('mois'), 1)) - 1
             if not 0 <= mois < NB_MOIS:
                 raise ErreurSaisie(f'Mois d\'acquisition invalide pour « {nom} » (1 à {NB_MOIS}).')
-            invs.append({'nom': nom, 'montant': _num(iv.get('montant')), 'duree_ans': int(_num(iv.get('duree'))),
-                         'ouverture': False, 'mise_en_service': mois})
+            cat = iv.get('categorie') if iv.get('categorie') in CATEGORIES else 'materiel_industriel'
+            duree = int(_num(iv.get('duree'), CATEGORIES[cat][2]))
+            if cat in ('terrains', 'cautions'):
+                duree = 0
+            invs.append({'nom': nom, 'montant': _num(iv.get('montant')), 'duree_ans': duree,
+                         'ouverture': False, 'mise_en_service': mois, 'categorie': CATEGORIES[cat][0]})
 
     capital = _num(d.get('capital'))
     cca = _num(d.get('comptes_courants'))
@@ -142,9 +211,9 @@ def construire_config(d):
             fisc[str(a)] = {'regime': 'reel', 'taux_is': pays['is'], 'minimum_ca': pays['minimum_ca']}
 
     base = {
-        'societe': societe, 'devise': pays['devise_libelle'], 'debut': debut, 'nb_mois': NB_MOIS,
+        'societe': societe, 'porteur': (d.get('porteur') or '').strip(), 'devise': pays['devise_libelle'], 'debut': debut, 'nb_mois': NB_MOIS,
         'pays': {**pays, 'code': code},
-        'produits': produits, 'investissements': invs,
+        'produits': produits, 'investissements': invs, 'charges_ponctuelles': ponctuelles,
         'financement': {'capital': capital, 'tresorerie_depart': capital + cca, 'comptes_courants': cca, 'emprunts': emprunts},
         'fiscalite': fisc, 'mois_paiement_solde_is': int(pays.get('mois_solde_is', 4)),
         'sensibilites': [

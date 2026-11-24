@@ -38,6 +38,13 @@ def _teinte(hexa, f=0.85):
     return 'FF' + ''.join(f'{int(c + (255 - c) * f):02X}' for c in (r, g, b))
 
 
+def clair(hexa):
+    """Couleur d'en-tête : la couleur secondaire si elle est claire, sinon une teinte éclaircie."""
+    h = hexa.lstrip('#')
+    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return _argb(hexa) if (0.299 * r + 0.587 * g + 0.114 * b) > 175 else _teinte(hexa, 0.7)
+
+
 def _contraste(hexa):
     h = hexa.lstrip('#')
     r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
@@ -49,12 +56,12 @@ TITRE_TXT = 'FFFFFFFF'
 thin = Side(style='thin', color='FFBFBFBF')
 
 
-def generer(cfg, out, theme=None, p=1):
+def generer(cfg, out, theme=None, p=1, apres=None, classeur=None):
     """theme : {'primaire': '#331C77', 'secondaire': '#FF2FED', 'police': 'Calibri', 'logo': chemin, 'marque': texte pied de page}"""
     global BROWN, BEIGE, POLICE, TITRE_TXT
     theme = theme or {}
-    BROWN = _argb(theme.get('primaire', '#331C77')); TITRE_TXT = _contraste(theme.get('primaire', '#331C77'))
-    BEIGE = _teinte(theme.get('secondaire', '#FF2FED'), 0.85); POLICE = theme.get('police') or 'Calibri'
+    BROWN = _argb(theme.get('primaire', '#8B4513')); TITRE_TXT = _contraste(theme.get('primaire', '#8B4513'))
+    BEIGE = clair(theme.get('secondaire', '#DDD4B9')); POLICE = theme.get('police') or 'Calibri'
     pays = cfg.get('pays', {})
     nm = lambda k, t: f"{p + k:02d}_{t}"
     SH, SM, SC, SI, SR, SB, SS = (nm(0, 'Hypothèses du projet'), nm(1, 'Détail mensuel'), nm(2, 'Crédit bancaire'), nm(3, 'Détail investissements'),
@@ -72,7 +79,10 @@ def generer(cfg, out, theme=None, p=1):
         for k in pr.get('couts_variables', {}):
             if k not in postes_var: postes_var.append(k)
 
-    wb = Workbook(); wb.remove(wb.active)
+    if classeur is not None:
+        wb = classeur
+    else:
+        wb = Workbook(); wb.remove(wb.active)
     def title(ws, t, sub=None):
         ws['A1'] = t; ws['A1'].font = Font(name=POLICE, size=14, bold=True, color=TITRE_TXT)
         for cc in range(2, 9): ws.cell(1, cc).fill = PatternFill('solid', fgColor=BROWN)
@@ -126,14 +136,22 @@ def generer(cfg, out, theme=None, p=1):
             inp(h.cell(r, 2), v)
     r += 1; h.cell(r, 1, 'Total charges fixes mensuelles').font = F(bold=True)
     val(h.cell(r, 2), f"=SUM(B{min(frow.values())}:B{r - 1})" if frow else 0, bold=True); r_fix_tot = r
+    ponct = cfg.get('charges_ponctuelles', []); prow_p = {}
+    if ponct:
+        r += 2; sec(h, r, 'C bis. Charges ponctuelles (frais de démarrage, non immobilisés)', 3); r += 1
+        for j, t in enumerate(['Charge', 'Montant', 'Mois (index, 0 = 1er mois)', 'Rubrique']): h.cell(r, 1 + j, t).font = F(bold=True)
+        for pc_ in ponct:
+            r += 1; inp(h.cell(r, 1), pc_['nom'], 'General'); inp(h.cell(r, 2), pc_['montant']); inp(h.cell(r, 3), pc_.get('mois', 0), '0'); prow_p[pc_['nom']] = r
+            inp(h.cell(r, 4), pc_.get('rubrique', ''), 'General')
     r += 2; sec(h, r, 'D. Investissements', 6); r += 1
-    for j, t in enumerate(['Bien', 'Montant', 'Durée (ans, 0 = non amorti)', 'Mois de mise en service (index, 0 = 1er mois)', "Au bilan d'ouverture (Oui/Non)"]):
+    for j, t in enumerate(['Bien', 'Montant', 'Durée (ans, 0 = non amorti)', 'Mois de mise en service (index, 0 = 1er mois)', "Au bilan d'ouverture (Oui/Non)", 'Catégorie']):
         h.cell(r, 1 + j, t).font = F(bold=True); h.cell(r, 1 + j).alignment = Alignment(wrap_text=True)
     irow = []
     dv = DataValidation(type='list', formula1='"Oui,Non"'); h.add_data_validation(dv)
     for iv in invs:
         r += 1; inp(h.cell(r, 1), iv['nom'], 'General'); inp(h.cell(r, 2), iv['montant']); inp(h.cell(r, 3), iv.get('duree_ans', 0), '0')
         inp(h.cell(r, 4), iv.get('mise_en_service', 0), '0'); inp(h.cell(r, 5), 'Oui' if iv.get('ouverture', True) else 'Non', 'General'); dv.add(h.cell(r, 5)); irow.append(r)
+        inp(h.cell(r, 6), iv.get('categorie', ''), 'General')
     r += 1; h.cell(r, 1, 'Total des investissements').font = F(bold=True)
     val(h.cell(r, 2), f"=SUM(B{irow[0]}:B{irow[-1]})" if irow else 0, bold=True); r_inv_tot = r
     r += 1; h.cell(r, 1, "dont investissements au bilan d'ouverture").font = F()
@@ -221,7 +239,11 @@ def generer(cfg, out, theme=None, p=1):
     cfr = {}
     for k in fixes:
         cfr[k] = line(k, lambda c, i, k=k: f"={H}!$B${frow[k]}")
-    first = min(list(cvr.values()) + list(cfr.values())); last = max(list(cvr.values()) + list(cfr.values()))
+    cpr = {}
+    for k in prow_p:
+        cpr[k] = line(k, lambda c, i, k=k: f"=IF({c}$3={H}!$C${prow_p[k]},{H}!$B${prow_p[k]},0)")
+    tous = list(cvr.values()) + list(cfr.values()) + list(cpr.values())
+    first = min(tous); last = max(tous)
     r_ch = line("Total charges d'exploitation", lambda c, i: f"=SUM({c}{first}:{c}{last})", True)
     r_ebe = line("Excédent brut d'exploitation", lambda c, i: f"={c}{r_ca}-{c}{r_ch}", True)
     r += 1
@@ -335,6 +357,7 @@ def generer(cfg, out, theme=None, p=1):
     rr0 = r + 1
     for k in postes_var: crl(k, lambda c, mc, y, k=k: f"={M}!{mc}{cvr[k]}")
     for k in fixes: crl(k, lambda c, mc, y, k=k: f"={M}!{mc}{cfr[k]}")
+    for k in cpr: crl(k, lambda c, mc, y, k=k: f"={M}!{mc}{cpr[k]}")
     rlast = r
     crl("Total charges d'exploitation", lambda c, mc, y: f"=SUM({c}{rr0}:{c}{rlast})", True, key='ch')
     crl("Excédent brut d'exploitation (EBE)", lambda c, mc, y: f"={c}{cro['ca']}-{c}{cro['ch']}", True, key='ebe')
@@ -380,7 +403,8 @@ def generer(cfg, out, theme=None, p=1):
         bset('cap', col, f"={H}!$B${r_cap}"); bset('ran', col, f"={pcol}{br['ran']}+{pcol}{br['res']}" if k > 0 else 0)
         bset('res', col, f"={R}!{rc}{cro['rn']}"); bset('cp', col, f"=SUM({col}{br['cap']}:{col}{br['res']})")
         bset('cca', col, f"={H}!$B${r_cca}"); bset('df', col, f"={C}!{GL(2 + N + k)}{r_tCF}")
-        bset('dfi', col, f"={R}!{rc}{cro['solde']}")
+        dern_mois = cal[max(i for i, (yy, _) in enumerate(cal) if yy == y)][1]
+        bset('dfi', col, f"={R}!{rc}{cro['solde']}" + (f"+IF({dern_mois}<{H}!$B${r_msolde},{R}!{GL(1 + k)}{cro['solde']},0)" if k > 0 else ''))
         bset('tp', col, f"={col}{br['cp']}+{col}{br['cca']}+{col}{br['df']}+{col}{br['dfi']}"); bset('ctl', col, f"=ROUND({col}{br['ta']}-{col}{br['tp']},0)")
 
     # ======================= Synthèse =======================
@@ -413,6 +437,14 @@ def generer(cfg, out, theme=None, p=1):
         ws.page_setup.orientation = 'landscape'; ws.page_setup.fitToWidth = 1; ws.page_setup.fitToHeight = 0
         ws.sheet_properties.pageSetUpPr.fitToPage = True
     wb.calculation.fullCalcOnLoad = True
+    ctx = dict(wb=wb, SH=SH, SM=SM, SC=SC, SI=SI, SR=SR, SB=SB, SS=SS, years=years, cal=cal, N=N, LC=LC, yc=yc,
+               prow=prow, vrow=vrow, frow=frow, prow_p=prow_p, irow=irow, erow=erow, yrow=yrow, drows=drows, r_dot=r_dot,
+               r_cap=r_cap, r_cca=r_cca, r_t0=r_t0, r_soc=r_soc, cro=cro, br=br, car=car, cvr=cvr, cfr=cfr, cpr=cpr,
+               r_ca=r_ca, r_ch=r_ch, r_ebe=r_ebe, r_capex=r_capex, r_deb=r_deb, r_serv=r_serv, r_imp=r_imp, r_tres=r_tres,
+               r_flux=r_flux, r_enc=r_enc, r_dec=r_dec, r_tD=r_tD, r_tI=r_tI, r_tP=r_tP, r_tK=r_tK, r_tCF=r_tCF,
+               blocks=blocks, r_brut=r_brut, r_amc=r_amc, r_net=r_net, r_cpx=r_cpx, theme=theme, F=F, BROWN=BROWN, BEIGE=BEIGE)
+    if apres:
+        apres(cfg, ctx)
     wb.save(out)
     return wb.sheetnames
 

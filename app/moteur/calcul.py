@@ -88,6 +88,7 @@ def calcule(cfg):
     dette_fiscale = 0.0
     ys = {a: {} for a in annees}
     solde_is_a_payer = {}  # mois index -> montant
+    soldes_decides = []  # (mois de décision, mois de paiement, montant)
     for i, c in enumerate(cal):
         ca = sum(p['volumes'][i] * p['prix'] for p in prods)
         vol = sum(p['volumes'][i] for p in prods)
@@ -96,6 +97,8 @@ def calcule(cfg):
             for k, v in p.get('couts_variables', {}).items():
                 cv[k] = cv.get(k, 0.0) + p['volumes'][i] * v
         cf = dict(fixes)
+        for pc_ in cfg.get('charges_ponctuelles', []):
+            cf[pc_['nom']] = cf.get(pc_['nom'], 0.0) + (pc_['montant'] if i == pc_.get('mois', 0) else 0.0)
         charges = sum(cv.values()) + sum(cf.values())
         it = sum(r[i]['interets'] for r, _ in emp_rows)
         serv = sum(r[i]['echeance'] for r, _ in emp_rows)
@@ -130,6 +133,7 @@ def calcule(cfg):
             solde = imp - acomptes
             if solde > 0.5:
                 idx = i + cfg.get('mois_paiement_solde_is', 3)
+                soldes_decides.append((i, idx, solde))
                 if idx < N:
                     solde_is_a_payer[idx] = solde_is_a_payer.get(idx, 0.0) + solde
             ys[c['annee']] = {'volume': S('volume'), 'ca': S('ca'), 'charges': S('charges'), 'ebe': S('ebe'),
@@ -159,7 +163,7 @@ def calcule(cfg):
         last = max(i for i, c in enumerate(cal) if c['annee'] == a)
         dette = sum(r[last]['crd_fin'] for r, _ in emp_rows)
         # IS restant dû à la clôture (payé l'exercice suivant)
-        dfisc = max(y['solde_is_restant'], 0.0)
+        dfisc = sum(m for d_, p_, m in soldes_decides if d_ <= last < p_)
         b = {'immobilisations_brutes': brut, 'amortissements_cumules': amort, 'immobilisations_nettes': brut - amort,
              'tresorerie': y['tresorerie_fin'], 'capital': fin['capital'], 'report_a_nouveau': ran, 'resultat': y['resultat_net'],
              'comptes_courants': fin.get('comptes_courants', 0.0), 'dettes_financieres': dette, 'dette_fiscale': dfisc}

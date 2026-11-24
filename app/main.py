@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from . import licences
-from .moteur.formulaire import PAYS, ErreurSaisie, normaliser_societe
+from .moteur.formulaire import CATEGORIES, COMPTES, FRAIS_DEMARRAGE, PAYS, ErreurSaisie, normaliser_societe
 from .moteur.service import generer_livrables
 
 ICI = Path(__file__).resolve().parent
@@ -63,7 +63,12 @@ def outil(request: Request):
         return RedirectResponse(f'/?erreur={e}', 303)
     pays = sorted(({'code': k, **v} for k, v in PAYS.items()), key=lambda p: p['nom'])
     return tpl.TemplateResponse(request, 'outil.html', {'pays': pays, 'pays_json': json.dumps(PAYS, ensure_ascii=False),
-                                                        'polices': POLICES, 'societe_liee': info['societe_liee']})
+                                                        'polices': POLICES, 'societe_liee': info['societe_liee'],
+                                                        'listes_json': json.dumps({
+                                                            'comptes': [[c, l] for c, l in COMPTES],
+                                                            'categories': [[k, v[0], v[2]] for k, v in CATEGORIES.items()],
+                                                            'frais': [[k, v[1]] for k, v in FRAIS_DEMARRAGE.items()] + [['autre', 'Autres frais de démarrage']],
+                                                        }, ensure_ascii=False)})
 
 
 @app.post('/generer')
