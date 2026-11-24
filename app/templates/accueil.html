@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titre %}Connexion{% endblock %}
+{% block contenu %}
+<div class="connexion">
+  <h1>Votre prévisionnel financier en ligne</h1>
+  <p class="sous">Saisissez la clé de licence reçue après votre achat pour accéder à l'outil.</p>
+  <form class="carte" method="post" action="/connexion">
+    {% if erreur %}<div class="erreur">{{ erreur }}</div>{% endif %}
+    <label for="cle">Clé de licence</label>
+    <input id="cle" name="cle" placeholder="ABC-123-XYZ-789" autocomplete="off" required>
+    {% if demo %}<p class="aide">Mode démonstration : saisissez une clé commençant par DEMO-.</p>{% endif %}
+    <p class="aide">Une licence permet de produire le prévisionnel d'une seule société, autant de fois que nécessaire pendant sa durée de validité.</p>
+    <button class="bouton" type="submit">Accéder à l'outil</button>
+  </form>
+  <p class="aide">Pas encore de licence ? <a href="{{ boutique }}">Acheter sur la boutique</a></p>
+</div>
+{% endblock %}

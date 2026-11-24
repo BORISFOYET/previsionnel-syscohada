@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block titre %}Mon prévisionnel{% endblock %}
+{% block entete %}<a href="/deconnexion">Se déconnecter</a>{% endblock %}
+{% block contenu %}
+<h1>Mon prévisionnel financier</h1>
+<p class="sous">Remplissez les rubriques, puis téléchargez votre prévisionnel Excel (en formules, modifiable) et sa synthèse PDF. Les montants sont hors taxes, dans la devise du pays.</p>
+{% if societe_liee %}<div class="info">Cette licence est liée à la société <b>{{ societe_liee }}</b>. Vous pouvez régénérer son prévisionnel autant de fois que nécessaire.</div>{% endif %}
+
+<form id="f" novalidate>
+<details class="carte" open><summary><span class="num">1</span><h2>Votre société</h2></summary>
+  <div class="grille">
+    <div><label>Raison sociale</label><input id="societe" required placeholder="Ex. AGRO PLUS SARL"></div>
+    <div><label>Pays</label><select id="pays" required><option value="">Choisir…</option>{% for p in pays %}<option value="{{ p.code }}">{{ p.nom }}</option>{% endfor %}</select></div>
+    <div><label>Mois de démarrage</label><input id="debut" type="month" required></div>
+  </div>
+  <div id="infoPays" class="info" hidden></div>
+</details>
+
+<details class="carte" open><summary><span class="num">2</span><h2>Ventes</h2></summary>
+  <p class="aide">Pour chaque produit ou service : le prix de vente HT, le volume vendu le premier mois et la croissance attendue. Les coûts variables sont ceux engagés pour chaque unité vendue (achats, matières, commissions, emballages…).</p>
+  <div class="lignes" id="produits"></div>
+  <button type="button" class="ajout" data-ajout="produit">+ Ajouter un produit</button>
+</details>
+
+<details class="carte"><summary><span class="num">3</span><h2>Personnel</h2></summary>
+  <p class="aide">Salaires bruts mensuels. Les charges sociales patronales du pays sont ajoutées automatiquement.</p>
+  <div class="lignes" id="personnel"></div>
+  <button type="button" class="ajout" data-ajout="perso">+ Ajouter un poste</button>
+</details>
+
+<details class="carte"><summary><span class="num">4</span><h2>Charges fixes mensuelles</h2></summary>
+  <p class="aide">Montants par mois, hors salaires. Laissez à 0 ce qui ne vous concerne pas.</p>
+  <div class="lignes" id="charges"></div>
+  <button type="button" class="ajout" data-ajout="charge">+ Ajouter une charge</button>
+</details>
+
+<details class="carte"><summary><span class="num">5</span><h2>Investissements</h2></summary>
+  <p class="aide">Durée d'amortissement en années (0 pour un terrain, qui ne s'amortit pas). Le mois d'achat va de 1 (premier mois) à 60.</p>
+  <div class="lignes" id="investissements"></div>
+  <button type="button" class="ajout" data-ajout="inv">+ Ajouter un investissement</button>
+</details>
+
+<details class="carte"><summary><span class="num">6</span><h2>Financement</h2></summary>
+  <div class="grille">
+    <div><label>Capital social apporté</label><input id="capital" inputmode="decimal" value="1000000"></div>
+    <div><label>Comptes courants d'associés <small>(avances des associés)</small></label><input id="comptes_courants" inputmode="decimal" value="0"></div>
+  </div>
+  <p class="aide" style="margin-top:16px">Emprunts bancaires. Le différé est le nombre de mois sans remboursement du capital (seuls les intérêts sont payés).</p>
+  <div class="lignes" id="emprunts"></div>
+  <button type="button" class="ajout" data-ajout="emp">+ Ajouter un emprunt</button>
+</details>
+
+<details class="carte"><summary><span class="num">7</span><h2>Fiscalité de la première année</h2></summary>
+  <div class="grille">
+    <div><label>Régime la première année</label><select id="regime_annee1"><option value="reel">Régime du réel (impôt sur les sociétés)</option><option value="forfait">Impôt forfaitaire / synthétique</option></select></div>
+    <div id="blocForfait" hidden><label>Montant annuel de l'impôt forfaitaire</label><input id="montant_forfait" inputmode="decimal" value="0"></div>
+  </div>
+  <p class="aide">Les années suivantes sont au régime du réel avec l'impôt sur les sociétés et le minimum de perception du pays choisi.</p>
+</details>
+
+<details class="carte"><summary><span class="num">8</span><h2>Personnalisation</h2></summary>
+  <div class="grille">
+    <div><label>Logo <small>PNG ou JPG, 3 Mo max.</small></label><input type="file" id="logo" accept="image/png,image/jpeg"></div>
+    <div><label>Couleur principale</label><input type="color" id="primaire" value="#1F4E79"></div>
+    <div><label>Couleur secondaire</label><input type="color" id="secondaire" value="#F2A900"></div>
+    <div><label>Police</label><select id="police">{% for p in polices %}<option>{{ p }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="apercu"><span id="ap1">Titre de tableau</span><span id="ap2">Ligne de section</span></div>
+</details>
+
+<div id="message"></div>
+<div id="resume" class="carte resume" hidden></div>
+<div class="pied"><button class="bouton" id="go" type="submit">Générer mon prévisionnel</button><span class="aide" style="margin:0">Fichier .zip : Excel + PDF</span></div>
+</form>
+
+<script>
+const PAYS = {{ pays_json|safe }};
+const modeles = {
+  produit: [['nom','Produit ou service','text',''],['unite','Unité','text','unité'],['prix','Prix de vente HT','num','10000'],['volume_depart','Volume du 1er mois','num','100'],['croissance_mensuelle','Croissance mensuelle année 1 (%)','num','3'],['croissance_annuelle','Croissance annuelle ans 2 à 5 (%)','num','10'],['cout_achat','Coût d\'achat unitaire','num','5000'],['autres_couts','Autres coûts variables unitaires','num','0']],
+  perso: [['poste','Poste','text',''],['effectif','Effectif','num','1'],['salaire','Salaire brut mensuel','num','150000']],
+  charge: [['nom','Charge','text',''],['montant','Montant mensuel','num','0']],
+  inv: [['nom','Bien','text',''],['montant','Montant HT','num','0'],['duree','Durée d\'amortissement (ans)','num','5'],['mois','Mois d\'achat (1 à 60)','num','1']],
+  emp: [['nom','Libellé','text','Emprunt bancaire'],['montant','Montant','num','0'],['taux','Taux annuel (%)','num','12'],['duree','Durée (mois)','num','36'],['differe','Différé (mois)','num','0'],['mois','Mois de déblocage (1 à 60)','num','1']]
+};
+const zones = {produit:'produits', perso:'personnel', charge:'charges', inv:'investissements', emp:'emprunts'};
+const classes = {produit:'l-produit', perso:'l-perso', charge:'l-charge', inv:'l-inv', emp:'l-emp'};
+function ajouter(type, valeurs={}) {
+  const d = document.createElement('div'); d.className = 'ligne ' + classes[type]; d.dataset.type = type;
+  for (const [k, lib, t, def] of modeles[type]) {
+    const w = document.createElement('div'); const l = document.createElement('label'); l.textContent = lib;
+    const i = document.createElement('input'); i.name = k; i.value = valeurs[k] ?? def;
+    if (t === 'num') i.inputMode = 'decimal';
+    w.append(l, i); d.append(w);
+  }
+  const x = document.createElement('button'); x.type = 'button'; x.className = 'suppr'; x.textContent = '×'; x.title = 'Supprimer'; x.onclick = () => d.remove();
+  d.append(x); document.getElementById(zones[type]).append(d);
+}
+document.querySelectorAll('[data-ajout]').forEach(b => b.onclick = () => ajouter(b.dataset.ajout));
+ajouter('produit', {nom: 'Produit principal'});
+ajouter('perso', {poste: 'Gérant'});
+for (const c of ['Loyer', 'Électricité et eau', 'Téléphone et internet', 'Transport et déplacements', 'Assurances', 'Honoraires comptables', 'Marketing et publicité', 'Entretien et réparations', 'Fournitures de bureau']) ajouter('charge', {nom: c});
+for (const [n, d] of [['Matériel informatique', 3], ['Mobilier de bureau', 5], ['Aménagements', 10]]) ajouter('inv', {nom: n, duree: d});
+const now = new Date(); document.getElementById('debut').value = `${now.getFullYear() + (now.getMonth() >= 10 ? 1 : 0)}-${String(now.getMonth() >= 10 ? 1 : now.getMonth() + 2).padStart(2, '0')}`;
+
+const $ = id => document.getElementById(id);
+$('pays').onchange = () => {
+  const p = PAYS[$('pays').value]; const b = $('infoPays');
+  if (!p) { b.hidden = true; return; }
+  const pc = x => (x * 100).toLocaleString('fr-FR', {maximumFractionDigits: 2}) + ' %';
+  b.hidden = false;
+  b.innerHTML = `Paramètres retenus pour <b>${p.nom}</b> : devise ${p.devise_libelle}, impôt sur les sociétés ${pc(p.is)}, minimum de perception ${pc(p.minimum_ca)} du chiffre d'affaires, TVA ${pc(p.tva)}, charges sociales patronales ${pc(p.charges_sociales_employeur)}. Vous pourrez les modifier dans l'Excel.`;
+};
+$('regime_annee1').onchange = () => $('blocForfait').hidden = $('regime_annee1').value !== 'forfait';
+function apercu() {
+  $('ap1').style.cssText = `background:${$('primaire').value};color:#fff;font-family:${$('police').value}`;
+  $('ap2').style.cssText = `background:${$('secondaire').value}33;color:#222;font-family:${$('police').value}`;
+}
+['primaire', 'secondaire', 'police'].forEach(i => $(i).oninput = apercu); apercu();
+
+function lignes(type) {
+  return [...document.querySelectorAll(`[data-type=${type}]`)].map(d => Object.fromEntries([...d.querySelectorAll('input')].map(i => [i.name, i.value])));
+}
+const fmt = x => Math.round(x).toLocaleString('fr-FR');
+$('f').onsubmit = async e => {
+  e.preventDefault();
+  const m = $('message'); m.innerHTML = '';
+  const donnees = {societe: $('societe').value, pays: $('pays').value, debut: $('debut').value,
+    produits: lignes('produit'), personnel: lignes('perso'), charges_fixes: lignes('charge'), investissements: lignes('inv'),
+    capital: $('capital').value, comptes_courants: $('comptes_courants').value, emprunts: lignes('emp'),
+    regime_annee1: $('regime_annee1').value, montant_forfait: $('montant_forfait').value};
+  const fd = new FormData(); fd.append('donnees', JSON.stringify(donnees));
+  ['primaire', 'secondaire', 'police'].forEach(i => fd.append(i, $(i).value));
+  if ($('logo').files[0]) fd.append('logo', $('logo').files[0]);
+  $('go').disabled = true; $('go').textContent = 'Génération en cours…';
+  try {
+    const r = await fetch('/generer', {method: 'POST', body: fd});
+    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.erreur || 'Erreur pendant la génération.'); }
+    const blob = await r.blob(); const nom = (r.headers.get('Content-Disposition') || '').match(/filename="(.+)"/)?.[1] || 'previsionnel.zip';
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nom; a.click();
+    m.innerHTML = '<div class="succes">Votre prévisionnel est téléchargé. Ouvrez l\'Excel et acceptez le calcul des formules si Excel le demande.</div>';
+    const res = JSON.parse(decodeURIComponent(escape(atob(r.headers.get('X-Resume') || 'e30='))));
+    if (res.exercices) {
+      const ans = Object.keys(res.exercices); const L = [["Chiffre d'affaires", 'ca'], ['EBE', 'ebe'], ['Résultat net', 'resultat_net'], ['CAF', 'caf'], ['Trésorerie fin', 'tresorerie_fin']];
+      $('resume').innerHTML = `<h2>Aperçu des résultats</h2><table><tr><th></th>${ans.map(a => `<th>${a}</th>`).join('')}</tr>${L.map(([l, k]) => `<tr><td>${l}</td>${ans.map(a => `<td>${fmt(res.exercices[a][k])}</td>`).join('')}</tr>`).join('')}</table>
+        <p class="${res.tresorerie_min < 0 ? 'erreur' : 'aide'}">Trésorerie la plus basse : ${fmt(res.tresorerie_min)} (${res.mois_tresorerie_min})${res.tresorerie_min < 0 ? ' : votre financement est insuffisant, augmentez les apports ou l\'emprunt.' : '.'}</p>`;
+      $('resume').hidden = false;
+    }
+  } catch (err) { m.innerHTML = `<div class="erreur">${err.message}</div>`; }
+  $('go').disabled = false; $('go').textContent = 'Générer mon prévisionnel';
+};
+</script>
+{% endblock %}
