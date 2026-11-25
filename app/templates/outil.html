@@ -137,7 +137,7 @@ $('pays').onchange = () => {
   if (!p) { b.hidden = true; return; }
   const pc = x => (x * 100).toLocaleString('fr-FR', {maximumFractionDigits: 2}) + ' %';
   b.hidden = false;
-  b.innerHTML = `Paramètres retenus pour <b>${p.nom}</b> : devise ${p.devise_libelle}, impôt sur les sociétés ${pc(p.is)}${p.is_seuil_ca ? ' (' + pc(p.is_majore) + ' au-delà de ' + (p.is_seuil_ca/1e9).toLocaleString('fr-FR') + ' milliards de CA)' : ''}, minimum de perception ${pc(p.minimum_ca)} du chiffre d'affaires, TVA ${pc(p.tva)}, charges sociales patronales ${pc(p.charges_sociales_employeur)}. Vous pourrez les modifier dans l'Excel.`;
+  b.innerHTML = `Paramètres retenus pour <b>${p.nom}</b> : devise ${p.devise_libelle}, impôt sur les sociétés ${pc(p.is)}${p.is_seuil_ca ? ' (' + pc(p.is_majore) + ' au-delà de ' + (p.is_seuil_ca/1e9).toLocaleString('fr-FR') + ' milliards de CA)' : ''}, minimum de perception ${pc(p.minimum_ca)} du chiffre d'affaires${p.minimum_plancher ? ', au moins ' + p.minimum_plancher.toLocaleString('fr-FR') + ' ' + p.devise_libelle : ''}${p.minimum_plafond ? ', au plus ' + p.minimum_plafond.toLocaleString('fr-FR') + ' ' + p.devise_libelle : ''}, TVA ${pc(p.tva)}, charges sociales patronales ${pc(p.charges_sociales_employeur)}. Vous pourrez les modifier dans l'Excel.${p.verification === 'officiel' ? '' : ' <i>Taux à confirmer avec votre comptable ou la direction des impôts : ' + (p.verification === 'partiel' ? 'ils ne sont pas tous vérifiés' : 'ils ne sont pas encore vérifiés') + ' sur un texte officiel.</i>'}`;
 };
 $('regime_annee1').onchange = () => $('blocForfait').hidden = $('regime_annee1').value !== 'forfait';
 function apercu() {

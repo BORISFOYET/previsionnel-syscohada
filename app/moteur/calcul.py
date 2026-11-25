@@ -129,7 +129,10 @@ def calcule(cfg):
             else:
                 taux = f.get('taux_majore', f['taux_is']) if f.get('seuil_ca') and S('ca') > f['seuil_ca'] else f['taux_is']
                 is_calc = taux * max(rai, 0)
-                imp = max(is_calc, f['minimum_ca'] * S('ca'))
+                mini = max(f['minimum_ca'] * S('ca'), f.get('minimum_plancher', 0))
+                if f.get('minimum_plafond'):
+                    mini = min(mini, f['minimum_plafond'])
+                imp = max(is_calc, mini)
             acomptes = sum(m['impots_payes'] for m in R) - sum(v for k, v in solde_is_a_payer.items() if cal[k]['annee'] == c['annee'])
             solde = imp - acomptes
             if solde > 0.5:
