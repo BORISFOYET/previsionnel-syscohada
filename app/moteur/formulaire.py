@@ -116,7 +116,10 @@ def construire_config(d):
     if not re.fullmatch(r'20\d\d-(0[1-9]|1[0-2])', debut):
         raise ErreurSaisie('Indiquez le mois de démarrage (AAAA-MM).')
     a0, m0 = map(int, debut.split('-'))
-    nb = 12 * NB_EXERCICES - (m0 - 1)
+    duree = int(_num(d.get('duree'), NB_EXERCICES))
+    if duree not in (3, 5):
+        raise ErreurSaisie('Choisissez une durée de 3 ou 5 ans.')
+    nb = 12 * duree - (m0 - 1)
     annees = sorted({a0 + (m0 - 1 + i) // 12 for i in range(nb)})
 
     produits = []
@@ -205,13 +208,12 @@ def construire_config(d):
                          'taux_annuel': _pct(e.get('taux')), 'duree_mois': duree, 'mois_deblocage': deb,
                          'mois_premiere_echeance': deb + differe + 1, 'interets_intercalaires': 'payes'})
 
-    regime1 = d.get('regime_annee1', 'reel')
+    mode = 'reel' if d.get('regime_fiscal') == 'reel' else 'auto'
+    synth = pays.get('synthetique') or {}
     fisc = {}
     for k, a in enumerate(annees):
-        if k == 0 and regime1 == 'forfait':
-            fisc[str(a)] = {'regime': 'forfait', 'montant': _num(d.get('montant_forfait'))}
-        else:
-            fisc[str(a)] = {'regime': 'reel', 'taux_is': pays['is'], 'minimum_ca': pays['minimum_ca'],
+        if True:
+            fisc[str(a)] = {'regime': 'reel', 'mode': mode, 'synth_seuil': synth.get('seuil_ca', 0), 'synth_bareme': synth.get('bareme', []), 'taux_is': pays['is'], 'minimum_ca': pays['minimum_ca'],
                             'seuil_ca': pays.get('is_seuil_ca', 0), 'taux_majore': pays.get('is_majore', pays['is']),
                             'minimum_plancher': pays.get('minimum_plancher', 0), 'minimum_plafond': pays.get('minimum_plafond', 0)}
 

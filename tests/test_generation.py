@@ -121,8 +121,7 @@ DONNEES = {
    "mois": "1"
   }
  ],
- "regime_annee1": "reel",
- "montant_forfait": "0",
+ "regime_fiscal": "auto",
  "porteur": "Jean Mbarga",
  "frais_demarrage": [
   {

@@ -54,9 +54,28 @@ def tableau_emprunt(e, n_mois):
     return rows, ann
 
 
+def impot_synthetique(ca, bareme):
+    """Barème [[CA à partir de, montant fixe, taux sur le CA], ...] trié par CA croissant."""
+    lig = [b for b in bareme if ca >= b[0]]
+    return (lig[-1][1] + lig[-1][2] * ca) if lig else 0.0
+
+
+def resoudre_regimes(cfg, cal):
+    """Régime de chaque exercice : synthétique si le CA annuel est sous le seuil du pays, sinon réel."""
+    ca_an = {}
+    for i, c in enumerate(cal):
+        ca_an[c['annee']] = ca_an.get(c['annee'], 0.0) + sum(p['volumes'][i] * p['prix'] for p in cfg['produits'])
+    for a, f in cfg['fiscalite'].items():
+        if f.get('mode') == 'auto' and f.get('synth_seuil') and ca_an.get(a, 0) < f['synth_seuil']:
+            f['regime'] = 'forfait'; f['montant'] = impot_synthetique(ca_an.get(a, 0), f.get('synth_bareme', []))
+        elif f.get('mode') in ('auto', 'reel'):
+            f['regime'] = 'reel'
+
+
 def calcule(cfg):
     cal = calendrier(cfg['debut'], cfg['nb_mois'])
     N = len(cal)
+    resoudre_regimes(cfg, cal)
     annees = sorted({c['annee'] for c in cal})
     prods = cfg['produits']
     fixes = cfg.get('charges_fixes_mensuelles', {})

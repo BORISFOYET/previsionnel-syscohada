@@ -582,6 +582,18 @@ def remplir(cfg, ctx):
     # nettoyage des repères numériques du modèle (numéros de page)
     for ref in ('AM59', 'AM62', 'BM49', 'CH49', 'CR49', 'BB50', 'BX50'):
         _ecrire(PL, ref, None)
+    for k in range(ny, 5):  # prévisionnel sur 3 ans : colonnes d'années inutilisées masquées
+        for col in (GL(35 + k), GL(24 + k), GL(45 + 2 * k), GL(46 + 2 * k), GL(61 + k), GL(72 + k)):
+            PL.column_dimensions[col].hidden = True
+    if ny < 5:  # la bordure droite du tableau passe sur la dernière colonne visible
+        from copy import copy as _cp
+        for base, pas in ((35, 1), (24, 1), (45, 2), (61, 1), (72, 1)):
+            der, fin = GL(base + pas * ny - 1 + (pas - 1)), GL(base + pas * 5 - 1 + (pas - 1))
+            for r in range(1, 63):
+                src, dst = PL[f'{fin}{r}'], PL[f'{der}{r}']
+                if type(dst).__name__ == 'MergedCell' or not src.border.right or not src.border.right.style:
+                    continue
+                b_ = _cp(dst.border); b_.right = _cp(src.border.right); dst.border = b_
     for col in crc + sc + vcol + scol + [GL(72 + k) for k in range(ny)]:
         PL.column_dimensions[col].width = 15
     for col in pcol_:

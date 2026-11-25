@@ -17,6 +17,7 @@
     <div><label>E-mail <small>(facultatif)</small></label><input id="email" type="email"></div>
     <div><label>Pays</label><select id="pays" required><option value="">Choisir…</option>{% for p in pays %}<option value="{{ p.code }}">{{ p.nom }}</option>{% endfor %}</select></div>
     <div><label>Mois de démarrage</label><input id="debut" type="month" required></div>
+    <div><label>Durée du prévisionnel</label><select id="duree"><option value="5">5 ans</option><option value="3">3 ans</option></select></div>
   </div>
   <div id="infoPays" class="info" hidden></div>
 </details>
@@ -46,7 +47,7 @@
 </details>
 
 <details class="carte"><summary><span class="num">6</span><h2>Investissements</h2></summary>
-  <p class="aide">La catégorie détermine la ligne du bilan et propose une durée d'amortissement usuelle, que vous pouvez modifier (0 pour un terrain ou une caution, qui ne s'amortissent pas). Le mois d'achat va de 1 (premier mois) à la fin du 5e exercice (60 si vous démarrez en janvier).</p>
+  <p class="aide">La catégorie détermine la ligne du bilan et propose une durée d'amortissement usuelle, que vous pouvez modifier (0 pour un terrain ou une caution, qui ne s'amortissent pas). Le mois d'achat va de 1 (premier mois) à la fin du dernier exercice (60 sur 5 ans, 36 sur 3 ans, si vous démarrez en janvier).</p>
   <div class="lignes" id="investissements"></div>
   <button type="button" class="ajout" data-ajout="inv">+ Ajouter un investissement</button>
 </details>
@@ -61,12 +62,11 @@
   <button type="button" class="ajout" data-ajout="emp">+ Ajouter un emprunt</button>
 </details>
 
-<details class="carte"><summary><span class="num">8</span><h2>Fiscalité de la première année</h2></summary>
+<details class="carte"><summary><span class="num">8</span><h2>Régime fiscal</h2></summary>
   <div class="grille">
-    <div><label>Régime la première année</label><select id="regime_annee1"><option value="reel">Régime du réel (impôt sur les sociétés)</option><option value="forfait">Impôt forfaitaire / synthétique</option></select></div>
-    <div id="blocForfait" hidden><label>Montant annuel de l'impôt forfaitaire</label><input id="montant_forfait" inputmode="decimal" value="0"></div>
+    <div><label>Régime fiscal</label><select id="regime_fiscal"><option value="auto">Automatique selon le chiffre d'affaires (recommandé)</option><option value="reel">Toujours au régime du réel</option></select></div>
   </div>
-  <p class="aide">Les années suivantes sont au régime du réel avec l'impôt sur les sociétés et le minimum de perception du pays choisi.</p>
+  <p class="aide" id="aideRegime">L'impôt est calculé automatiquement chaque année.</p>
 </details>
 
 <details class="carte"><summary><span class="num">9</span><h2>Personnalisation</h2></summary>
@@ -88,12 +88,12 @@
 const PAYS = {{ pays_json|safe }};
 const LISTES = {{ listes_json|safe }};
 const modeles = {
-  produit: [['nom','Produit ou service','text',''],['unite','Unité','text','unité'],['prix','Prix de vente HT','num','10000'],['volume_depart','Volume du 1er mois','num','100'],['croissance_mensuelle','Croissance mensuelle année 1 (%)','num','3'],['croissance_annuelle','Croissance annuelle ans 2 à 5 (%)','num','10'],['cout_achat','Coût d\'achat unitaire','num','5000'],['autres_couts','Autres coûts variables unitaires','num','0']],
+  produit: [['nom','Produit ou service','text',''],['unite','Unité','text','unité'],['prix','Prix de vente HT','num','10000'],['volume_depart','Volume du 1er mois','num','100'],['croissance_mensuelle','Croissance mensuelle année 1 (%)','num','3'],['croissance_annuelle','Croissance annuelle à partir de l\'année 2 (%)','num','10'],['cout_achat','Coût d\'achat unitaire','num','5000'],['autres_couts','Autres coûts variables unitaires','num','0']],
   perso: [['poste','Poste','text',''],['effectif','Effectif','num','1'],['salaire','Salaire brut mensuel','num','150000'],['dirigeant','Dirigeant','case','']],
   charge: [['compte','Compte SYSCOHADA','liste:comptes','638'],['nom','Libellé (facultatif)','text',''],['montant','Montant mensuel','num','0']],
-  frais: [['type','Type de frais','liste:frais','etudes'],['nom','Libellé (facultatif)','text',''],['montant','Montant HT','num','0'],['mois','Mois (1 à 60 max.)','num','1']],
-  inv: [['categorie','Catégorie','liste:categories','materiel_industriel'],['nom','Bien','text',''],['montant','Montant HT','num','0'],['duree','Durée d\'amortissement (ans)','num','5'],['mois','Mois d\'achat (1 à 60 max.)','num','1']],
-  emp: [['nom','Libellé','text','Emprunt bancaire'],['montant','Montant','num','0'],['taux','Taux annuel (%)','num','12'],['duree','Durée (mois)','num','36'],['differe','Différé (mois)','num','0'],['mois','Mois de déblocage (1 à 60 max.)','num','1']]
+  frais: [['type','Type de frais','liste:frais','etudes'],['nom','Libellé (facultatif)','text',''],['montant','Montant HT','num','0'],['mois','Mois (1 à 60, ou 36 sur 3 ans)','num','1']],
+  inv: [['categorie','Catégorie','liste:categories','materiel_industriel'],['nom','Bien','text',''],['montant','Montant HT','num','0'],['duree','Durée d\'amortissement (ans)','num','5'],['mois','Mois d\'achat (1 à 60, ou 36 sur 3 ans)','num','1']],
+  emp: [['nom','Libellé','text','Emprunt bancaire'],['montant','Montant','num','0'],['taux','Taux annuel (%)','num','12'],['duree','Durée (mois)','num','36'],['differe','Différé (mois)','num','0'],['mois','Mois de déblocage (1 à 60, ou 36 sur 3 ans)','num','1']]
 };
 const zones = {produit:'produits', perso:'personnel', charge:'charges', frais:'frais', inv:'investissements', emp:'emprunts'};
 const classes = {produit:'l-produit', perso:'l-perso', charge:'l-charge', frais:'l-charge', inv:'l-inv', emp:'l-emp'};
@@ -138,8 +138,11 @@ $('pays').onchange = () => {
   const pc = x => (x * 100).toLocaleString('fr-FR', {maximumFractionDigits: 2}) + ' %';
   b.hidden = false;
   b.innerHTML = `Paramètres retenus pour <b>${p.nom}</b> : devise ${p.devise_libelle}, impôt sur les sociétés ${pc(p.is)}${p.is_seuil_ca ? ' (' + pc(p.is_majore) + ' au-delà de ' + (p.is_seuil_ca/1e9).toLocaleString('fr-FR') + ' milliards de CA)' : ''}, minimum de perception ${pc(p.minimum_ca)} du chiffre d'affaires${p.minimum_plancher ? ', au moins ' + p.minimum_plancher.toLocaleString('fr-FR') + ' ' + p.devise_libelle : ''}${p.minimum_plafond ? ', au plus ' + p.minimum_plafond.toLocaleString('fr-FR') + ' ' + p.devise_libelle : ''}, TVA ${pc(p.tva)}, charges sociales patronales ${pc(p.charges_sociales_employeur)}. Vous pourrez les modifier dans l'Excel.${p.verification === 'officiel' ? '' : ' <i>Taux à confirmer avec votre comptable ou la direction des impôts : ' + (p.verification === 'partiel' ? 'ils ne sont pas tous vérifiés' : 'ils ne sont pas encore vérifiés') + ' sur un texte officiel.</i>'}`;
+  const sy = p.synthetique, M = n => n.toLocaleString('fr-FR') + ' ' + p.devise_libelle;
+  $('aideRegime').innerHTML = sy
+    ? `En automatique, chaque année dont le chiffre d'affaires est inférieur à ${M(sy.seuil_ca)} est soumise à l'${sy.nom.toLowerCase()} (calculé selon le barème du pays), les autres au réel : impôt sur les sociétés sur le résultat, jamais moins que le minimum de perception sur le chiffre d'affaires.${sy.verification === 'officiel' ? '' : ' <i>Barème à confirmer : non relu sur un texte officiel.</i>'}`
+    : `Pour ${p.nom}, l'outil calcule chaque année l'impôt sur les sociétés sur le résultat, jamais moins que le minimum de perception sur le chiffre d'affaires. Le barème de l'impôt synthétique de ce pays n'est pas encore intégré : vous pouvez le saisir dans l'onglet Hypothèses de l'Excel, et le calcul se fera tout seul.`;
 };
-$('regime_annee1').onchange = () => $('blocForfait').hidden = $('regime_annee1').value !== 'forfait';
 function apercu() {
   $('ap1').style.cssText = `background:${$('primaire').value};color:#fff;font-family:${$('police').value}`;
   $('ap2').style.cssText = `background:${$('secondaire').value}33;color:#222;font-family:${$('police').value}`;
@@ -153,10 +156,10 @@ const fmt = x => Math.round(x).toLocaleString('fr-FR');
 $('f').onsubmit = async e => {
   e.preventDefault();
   const m = $('message'); m.innerHTML = '';
-  const donnees = {societe: $('societe').value, porteur: $('porteur').value, forme_juridique: $('forme_juridique').value, ville: $('ville').value, telephone: $('telephone').value, email: $('email').value, pays: $('pays').value, debut: $('debut').value,
+  const donnees = {societe: $('societe').value, porteur: $('porteur').value, forme_juridique: $('forme_juridique').value, ville: $('ville').value, telephone: $('telephone').value, email: $('email').value, pays: $('pays').value, debut: $('debut').value, duree: $('duree').value,
     produits: lignes('produit'), personnel: lignes('perso'), charges_fixes: lignes('charge'), frais_demarrage: lignes('frais'), investissements: lignes('inv'),
     capital: $('capital').value, comptes_courants: $('comptes_courants').value, emprunts: lignes('emp'),
-    regime_annee1: $('regime_annee1').value, montant_forfait: $('montant_forfait').value};
+    regime_fiscal: $('regime_fiscal').value};
   const fd = new FormData(); fd.append('donnees', JSON.stringify(donnees));
   ['primaire', 'secondaire', 'police'].forEach(i => fd.append(i, $(i).value));
   if ($('logo').files[0]) fd.append('logo', $('logo').files[0]);

@@ -171,17 +171,29 @@ def generer(cfg, out, theme=None, p=1, apres=None, classeur=None):
         inp(h.cell(r, 4), e['duree_mois'], '0'); inp(h.cell(r, 5), e['mois_deblocage'], '0'); inp(h.cell(r, 6), e['mois_premiere_echeance'], '0')
         val(h.cell(r, 7), f"=IF(D{r}>0,IF(C{r}=0,B{r}/D{r},B{r}*(C{r}/12)/(1-(1+C{r}/12)^-D{r})),0)", bold=True); erow.append(r)
     r += 1; h.cell(r, 1, 'Intérêts entre déblocage et 1re échéance : payés à leur date (intérêts intercalaires).').font = F(italic=True, size=9)
-    r += 2; sec(h, r, 'F. Fiscalité par exercice', 9); r += 1
-    for j, t in enumerate(['Exercice', 'Régime (forfait / reel)', 'Montant forfaitaire', 'Taux IS', 'Minimum de perception (% CA)', 'Seuil de CA du taux majoré (0 = aucun)', 'Taux IS au-delà du seuil', 'Minimum de perception : plancher annuel', 'Minimum de perception : plafond annuel (0 = aucun)']):
+    f0 = fisc[str(years[0])]
+    r += 2; sec(h, r, "F. Régime fiscal et impôt synthétique", 4)
+    r += 1; h.cell(r, 1, 'Mode : « auto » (synthétique si le CA annuel est sous le seuil, sinon réel) ou « reel »').font = F(); inp(h.cell(r, 2), f0.get('mode', 'auto'), 'General'); r_mode = r
+    r += 1; h.cell(r, 1, "Seuil de CA annuel du régime synthétique (0 = toujours au réel)").font = F(); inp(h.cell(r, 2), f0.get('synth_seuil', 0)); r_sseuil = r
+    r += 1
+    for j, t in enumerate(["Barème : CA annuel à partir de", 'Montant fixe', 'Taux sur le CA']):
+        h.cell(r, 1 + j, t).font = F(bold=True)
+    bar = list(f0.get('synth_bareme', [])) or [[0, 0, 0]]
+    r_b0 = r + 1
+    for b_ in bar:
+        r += 1; inp(h.cell(r, 1), b_[0]); inp(h.cell(r, 2), b_[1]); inp(h.cell(r, 3), b_[2], '0.00%')
+    r_b1 = r
+    r += 2; sec(h, r, 'G. Fiscalité par exercice (régime et impôt synthétique calculés)', 9); r += 1
+    for j, t in enumerate(['Exercice', 'Régime (forfait = synthétique / reel)', 'Impôt synthétique annuel', 'Taux IS', 'Minimum de perception (% CA)', 'Seuil de CA du taux majoré (0 = aucun)', 'Taux IS au-delà du seuil', 'Minimum de perception : plancher annuel', 'Minimum de perception : plafond annuel (0 = aucun)']):
         h.cell(r, 1 + j, t).font = F(bold=True)
     yrow = {}
     for y in years:
         f = fisc[str(y)]; r += 1; h.cell(r, 1, y).font = F(bold=True); yrow[y] = r
-        inp(h.cell(r, 2), f['regime'], 'General'); inp(h.cell(r, 3), f.get('montant', 0)); inp(h.cell(r, 4), f.get('taux_is', 0), '0.00%'); inp(h.cell(r, 5), f.get('minimum_ca', 0), '0.00%')
+        val(h.cell(r, 2), f['regime'], 'General'); val(h.cell(r, 3), f.get('montant', 0)); inp(h.cell(r, 4), f.get('taux_is', 0), '0.00%'); inp(h.cell(r, 5), f.get('minimum_ca', 0), '0.00%')
         inp(h.cell(r, 6), f.get('seuil_ca', 0)); inp(h.cell(r, 7), f.get('taux_majore', f.get('taux_is', 0)), '0.00%')
         inp(h.cell(r, 8), f.get('minimum_plancher', 0)); inp(h.cell(r, 9), f.get('minimum_plafond', 0))
     r += 1; h.cell(r, 1, "Mois de l'année où le solde d'IS N-1 est payé (1 à 12)").font = F(); inp(h.cell(r, 2), cfg.get('mois_paiement_solde_is', 3), '0'); r_msolde = r
-    r += 2; sec(h, r, 'G. Paramètres du pays', 3)
+    r += 2; sec(h, r, 'H. Paramètres du pays', 3)
     r += 1; h.cell(r, 1, 'Pays').font = F(); val(h.cell(r, 2), pays.get('nom', ''), 'General', bold=True)
     r += 1; h.cell(r, 1, 'Devise').font = F(); val(h.cell(r, 2), cfg.get('devise', ''), 'General')
     r += 1; h.cell(r, 1, 'Taux de TVA (pour information : le prévisionnel est établi hors taxes)').font = F(); inp(h.cell(r, 2), pays.get('tva', 0), '0.00%')
@@ -256,6 +268,14 @@ def generer(cfg, out, theme=None, p=1, apres=None, classeur=None):
                                                  f'INDEX({H}!$C${yrow[years[0]]}:$C${yrow[years[-1]]},MATCH({c}$4,{H}!$A${yrow[years[0]]}:$A${yrow[years[-1]]},0))/COUNTIF($B$4:${LC}$4,{c}$4),'
                                                  f'INDEX({H}!$E${yrow[years[0]]}:$E${yrow[years[-1]]},MATCH({c}$4,{H}!$A${yrow[years[0]]}:$A${yrow[years[-1]]},0))*{c}{r_ca})'
                                                  f'+IF({c}$5={H}!$B${r_msolde},IFERROR(INDEX({R}!$B${{SOLDE}}:${GL(1 + len(years))}${{SOLDE}},MATCH({c}$4-1,{R}!$B$4:${GL(1 + len(years))}$4,0)),0),0)'))
+    for y in years:
+        ca_y = f"SUMIF({M}!$B$4:${LC}$4,{y},{M}!$B${r_ca}:${LC}${r_ca})"
+        h[f'B{yrow[y]}'].value = f'=IF(AND($B${r_mode}="auto",$B${r_sseuil}>0,{ca_y}<$B${r_sseuil}),"forfait","reel")'
+        if r_b0 == r_b1:  # barème d'une seule ligne : montant fixe + taux
+            h[f'C{yrow[y]}'].value = f'=IF(B{yrow[y]}="forfait",IF({ca_y}>=$A${r_b0},$B${r_b0}+$C${r_b0}*{ca_y},0),0)'
+            continue
+        h[f'C{yrow[y]}'].value = (f'=IF(B{yrow[y]}="forfait",IFERROR(INDEX($B${r_b0}:$B${r_b1},MATCH({ca_y},$A${r_b0}:$A${r_b1},1))'
+                                  f'+INDEX($C${r_b0}:$C${r_b1},MATCH({ca_y},$A${r_b0}:$A${r_b1},1))*{ca_y},0),0)')
     r_enc = line('Total encaissements', lambda c, i: f"={c}{r_ca}+{c}{r_deb}", True)
     r_dec = line('Total décaissements', lambda c, i: f"={c}{r_ch}+{c}{r_capex}+{c}{r_serv}+{c}{r_imp}", True)
     r_flux = line('Flux net de trésorerie', lambda c, i: f"={c}{r_enc}-{c}{r_dec}")
