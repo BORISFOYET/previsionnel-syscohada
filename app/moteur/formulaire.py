@@ -211,7 +211,8 @@ def construire_config(d):
         if k == 0 and regime1 == 'forfait':
             fisc[str(a)] = {'regime': 'forfait', 'montant': _num(d.get('montant_forfait'))}
         else:
-            fisc[str(a)] = {'regime': 'reel', 'taux_is': pays['is'], 'minimum_ca': pays['minimum_ca']}
+            fisc[str(a)] = {'regime': 'reel', 'taux_is': pays['is'], 'minimum_ca': pays['minimum_ca'],
+                            'seuil_ca': pays.get('is_seuil_ca', 0), 'taux_majore': pays.get('is_majore', pays['is'])}
 
     base = {
         'societe': societe, 'porteur': (d.get('porteur') or '').strip(), 'devise': pays['devise_libelle'], 'debut': debut, 'nb_mois': nb,

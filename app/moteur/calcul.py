@@ -127,7 +127,8 @@ def calcule(cfg):
             if f['regime'] == 'forfait':
                 imp = f['montant']; is_calc = None
             else:
-                is_calc = f['taux_is'] * max(rai, 0)
+                taux = f.get('taux_majore', f['taux_is']) if f.get('seuil_ca') and S('ca') > f['seuil_ca'] else f['taux_is']
+                is_calc = taux * max(rai, 0)
                 imp = max(is_calc, f['minimum_ca'] * S('ca'))
             acomptes = sum(m['impots_payes'] for m in R) - sum(v for k, v in solde_is_a_payer.items() if cal[k]['annee'] == c['annee'])
             solde = imp - acomptes

@@ -31,14 +31,16 @@
    "nom": "Cameroun",
    "devise": "XAF",
    "devise_libelle": "FCFA",
-   "is": 0.33,
+   "is": 0.275,
    "minimum_ca": 0.022,
    "tva": 0.1925,
    "charges_sociales_employeur": 0.1545,
    "mois_solde_is": 4,
-   "source": "PwC Worldwide Tax Summaries 2025 (IS 30 % + 10 % CAC ; 27,5 % possible si CA ≤ 3 Md FCFA)",
+   "source": "DGI Cameroun (impots.cm, fiche IS) ; CGI art. 17 et 17 bis : 25 % + 10 % CAC = 27,5 % si CA ≤ 3 Md FCFA, 30 % + CAC = 33 % au-delà",
    "note_charges_sociales": "Estimation : CNPS 12,95 % (pensions 4,2 %, famille 7 %, accidents 1,75 %) + Crédit foncier 1,5 % + FNE 1 %",
-   "statut_charges_sociales": "estimation"
+   "statut_charges_sociales": "estimation",
+   "is_seuil_ca": 3000000000,
+   "is_majore": 0.33
   },
   "CF": {
    "nom": "Centrafrique",

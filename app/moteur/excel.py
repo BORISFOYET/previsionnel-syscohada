@@ -171,13 +171,14 @@ def generer(cfg, out, theme=None, p=1, apres=None, classeur=None):
         inp(h.cell(r, 4), e['duree_mois'], '0'); inp(h.cell(r, 5), e['mois_deblocage'], '0'); inp(h.cell(r, 6), e['mois_premiere_echeance'], '0')
         val(h.cell(r, 7), f"=IF(D{r}>0,IF(C{r}=0,B{r}/D{r},B{r}*(C{r}/12)/(1-(1+C{r}/12)^-D{r})),0)", bold=True); erow.append(r)
     r += 1; h.cell(r, 1, 'Intérêts entre déblocage et 1re échéance : payés à leur date (intérêts intercalaires).').font = F(italic=True, size=9)
-    r += 2; sec(h, r, 'F. Fiscalité par exercice', 6); r += 1
-    for j, t in enumerate(['Exercice', 'Régime (forfait / reel)', 'Montant forfaitaire', 'Taux IS', 'Minimum de perception (% CA)']):
+    r += 2; sec(h, r, 'F. Fiscalité par exercice', 7); r += 1
+    for j, t in enumerate(['Exercice', 'Régime (forfait / reel)', 'Montant forfaitaire', 'Taux IS', 'Minimum de perception (% CA)', 'Seuil de CA du taux majoré (0 = aucun)', 'Taux IS au-delà du seuil']):
         h.cell(r, 1 + j, t).font = F(bold=True)
     yrow = {}
     for y in years:
         f = fisc[str(y)]; r += 1; h.cell(r, 1, y).font = F(bold=True); yrow[y] = r
         inp(h.cell(r, 2), f['regime'], 'General'); inp(h.cell(r, 3), f.get('montant', 0)); inp(h.cell(r, 4), f.get('taux_is', 0), '0.00%'); inp(h.cell(r, 5), f.get('minimum_ca', 0), '0.00%')
+        inp(h.cell(r, 6), f.get('seuil_ca', 0)); inp(h.cell(r, 7), f.get('taux_majore', f.get('taux_is', 0)), '0.00%')
     r += 1; h.cell(r, 1, "Mois de l'année où le solde d'IS N-1 est payé (1 à 12)").font = F(); inp(h.cell(r, 2), cfg.get('mois_paiement_solde_is', 3), '0'); r_msolde = r
     r += 2; sec(h, r, 'G. Paramètres du pays', 3)
     r += 1; h.cell(r, 1, 'Pays').font = F(); val(h.cell(r, 2), pays.get('nom', ''), 'General', bold=True)
@@ -366,7 +367,7 @@ def generer(cfg, out, theme=None, p=1, apres=None, classeur=None):
     crl('Charges financières (intérêts)', lambda c, mc, y: f"={C}!{GL(2 + N + years.index(y))}{r_tI}", key='int')
     crl('Résultat avant impôt', lambda c, mc, y: f"={c}{cro['rex']}-{c}{cro['int']}", True, key='rai')
     hy = lambda col, y: f"{H}!${col}${yrow[y]}"
-    crl('Impôt calculé au taux normal (réel)', lambda c, mc, y: f'=IF({hy("B", y)}="reel",{hy("D", y)}*MAX({c}{cro["rai"]},0),0)', key='iscalc')
+    crl('Impôt calculé au taux normal (réel)', lambda c, mc, y: f'=IF({hy("B", y)}="reel",IF(AND({hy("F", y)}>0,{c}{cro["ca"]}>{hy("F", y)}),{hy("G", y)},{hy("D", y)})*MAX({c}{cro["rai"]},0),0)', key='iscalc')
     crl('Impôt de l\'exercice (forfait, ou max(IS, minimum de perception))', lambda c, mc, y: f'=IF({hy("B", y)}="forfait",{hy("C", y)},MAX({c}{cro["iscalc"]},{hy("E", y)}*{c}{cro["ca"]}))', key='imp')
     crl('Résultat net', lambda c, mc, y: f"={c}{cro['rai']}-{c}{cro['imp']}", True, key='rn')
     crl('Impôt versé dans l\'exercice (hors solde N-1)', lambda c, mc, y: f'=IF({hy("B", y)}="forfait",{hy("C", y)},{hy("E", y)}*{c}{cro["ca"]})', key='verse')
