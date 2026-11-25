@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block titre %}Ma société{% endblock %}
+{% block contenu %}
+<h1>Ma société</h1>
+<p class="sous">Ces informations apparaissent sur vos devis et factures.</p>
+<form method="post" action="/societe" enctype="multipart/form-data" class="carte pile">
+  <div class="grille">
+    <div><label for="raison_sociale">Raison sociale</label><input id="raison_sociale" name="raison_sociale" value="{{ soc.raison_sociale }}" required></div>
+    <div><label for="forme">Forme juridique</label><select id="forme" name="forme">{% for x in formes %}<option {{ 'selected' if soc.forme == x }}>{{ x }}</option>{% endfor %}</select></div>
+    <div><label for="pays">Pays</label><select id="pays" name="pays">{% for p in pays %}<option value="{{ p.code }}" {{ 'selected' if soc.pays == p.code }}>{{ p.nom }} (TVA {{ p.tva|pct }})</option>{% endfor %}</select></div>
+    <div><label for="adresse">Adresse</label><input id="adresse" name="adresse" value="{{ soc.adresse }}"></div>
+    <div><label for="telephone">Téléphone</label><input id="telephone" name="telephone" value="{{ soc.telephone }}"></div>
+    <div><label for="email">E-mail</label><input id="email" name="email" type="email" value="{{ soc.email }}"></div>
+    <div><label for="rccm">N° RCCM</label><input id="rccm" name="rccm" value="{{ soc.rccm }}"></div>
+    <div><label for="niu">NIU / IFU / NCC</label><input id="niu" name="niu" value="{{ soc.niu }}"></div>
+    <div><label for="regime">Régime fiscal</label><input id="regime" name="regime" value="{{ soc.regime }}" placeholder="Ex. : Réel simplifié, IGS, Synthétique"></div>
+    <div class="case-ligne"><label><input type="checkbox" name="assujetti_tva" value="1" {{ 'checked' if soc.assujetti_tva }}> Assujetti à la TVA</label></div>
+  </div>
+  <div><label for="mentions">Mentions en bas des factures (coordonnées bancaires, Mobile Money, conditions de paiement)</label>
+    <textarea id="mentions" name="mentions" rows="3">{{ soc.mentions }}</textarea></div>
+  <div class="grille">
+    <div><label for="logo">Logo (PNG ou JPEG, 300 Ko max)</label><input id="logo" name="logo" type="file" accept="image/png,image/jpeg">
+      {% if soc.logo %}<div class="apercu"><img src="{{ soc.logo }}" alt="Logo" style="max-height:48px"><label><input type="checkbox" name="retirer_logo" value="1"> Retirer</label></div>{% endif %}</div>
+    <div><label for="couleur1">Couleur principale</label><input id="couleur1" name="couleur1" type="color" value="{{ soc.couleur1 }}"></div>
+    <div><label for="couleur2">Couleur d'accent</label><input id="couleur2" name="couleur2" type="color" value="{{ soc.couleur2 }}"></div>
+  </div>
+  <button class="bouton">Enregistrer</button>
+</form>
+<div class="carte">
+  <h2>Abonnement et données</h2>
+  <p>Abonnement valable jusqu'au <strong>{{ soc.expire_le|d }}</strong>. <a href="/renouveler">Renouveler</a></p>
+  <p><a class="ajout" href="/export/tout">Télécharger toutes mes données (Excel)</a></p>
+</div>
+{% endblock %}

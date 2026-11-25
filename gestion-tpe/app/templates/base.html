@@ -1,0 +1,87 @@
+{% from '_icones.html' import ic %}
+{%- macro initiales(nom) -%}{{ (nom or '?').split()|map('first')|join('')|upper|truncate(2, True, '') }}{%- endmacro -%}
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titre %}{{ NOM }}{% endblock %} · Account's</title>
+<meta name="theme-color" content="#331C77">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/static/icone-192.png">
+<link rel="apple-touch-icon" href="/static/icone-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body class="{{ 'app' if u else 'public' }}">
+{% if u %}
+<aside class="cote" id="cote">
+  <a href="/" class="marque"><img src="/static/logo_accounts.jpg" alt="Account's"><span>Gestion TPE</span></a>
+  {% set gerant = u.role == 'gerant' %}
+  {% macro lien(href, icone, lib, badge=0, sous=False) -%}
+    {%- set parts = href.split('?') -%}
+    {%- set actif = chemin == parts[0] and (parts|length == 1 or parts[1] == 'type=' ~ request.query_params.get('type', 'facture')) -%}
+    <a href="{{ href }}" class="nav {{ 'actif' if actif }} {{ 'sous' if sous }}">{% if icone %}{{ ic(icone) }}{% endif %}<span>{{ lib }}</span>{% if badge %}<b class="badge">{{ badge }}</b>{% endif %}</a>
+  {%- endmacro %}
+  <nav>
+    {% if gerant %}{{ lien('/tableau', 'tableau', 'Tableau de bord') }}{% endif %}
+    {{ lien('/vente', 'vente', 'Vente au comptoir') }}
+    <p class="groupe">Ventes</p>
+    {% if gerant %}{{ lien('/documents?type=devis', 'devis', 'Devis') }}{% endif %}
+    {{ lien('/documents?type=facture', 'facture', 'Factures', nav_badges.impayes if nav_badges) }}
+    {{ lien('/clients', 'clients', 'Clients') }}
+    <p class="groupe">Argent et stock</p>
+    {{ lien('/caisse', 'caisse', 'Caisse') }}
+    {{ lien('/stocks', 'stocks', 'Stocks', nav_badges.alertes if nav_badges) }}
+    {% if gerant %}{{ lien('/articles', 'articles', 'Articles') }}
+    {{ lien('/livres', 'livres', 'Livres et TVA') }}
+    <hr>
+    {{ lien('/societe', 'societe', 'Ma société') }}
+    {{ lien('/equipe', 'equipe', 'Équipe') }}
+    {{ lien('/historique', 'historique', 'Historique') }}{% endif %}
+  </nav>
+  <div class="abonnement {{ 'expire' if soc.expire }}">
+    <span class="pastille-ic">{{ ic('eclair', 18) }}</span>
+    {% if soc.expire %}<strong>Abonnement expiré</strong><p>Votre espace est en lecture seule. Vos données restent disponibles.</p>
+    {% else %}<strong>Abonnement actif</strong><p>Jusqu'au {{ soc.expire_le|d }}{% if soc.jours_restants <= 30 %}, plus que {{ soc.jours_restants }} jours{% endif %}.</p>{% endif %}
+    {% if gerant %}<a class="bouton noir" href="/renouveler">Renouveler</a>{% endif %}
+  </div>
+</aside>
+<div class="voile" id="voile"></div>
+<div class="page">
+  <header class="barre">
+    <button class="icone-btn menu-btn" id="menu-btn" aria-label="Ouvrir le menu">{{ ic('menu') }}</button>
+    <form class="recherche" action="/recherche" method="get" role="search">{{ ic('recherche', 18) }}<input name="q" value="{{ request.query_params.get('q', '') if chemin == '/recherche' }}" placeholder="Rechercher une facture, un client, un article…" aria-label="Rechercher"></form>
+    <a class="bouton" href="/vente">{{ ic('plus', 18) }}<span>Nouvelle vente</span></a>
+    <div class="profil">
+      <span class="avatar">{{ initiales(u.nom) }}</span>
+      <span class="qui"><strong>{{ u.nom }}</strong><small>{{ soc.raison_sociale }}</small></span>
+      <a href="/deconnexion" class="icone-btn" aria-label="Se déconnecter" title="Se déconnecter">{{ ic('sortie', 18) }}</a>
+    </div>
+  </header>
+  {% if soc.expire %}<div class="alerte">Abonnement expiré le {{ soc.expire_le|d }} : l'espace est en lecture seule. {% if u.role == 'gerant' %}<a href="/renouveler">Renouveler</a>{% endif %}</div>{% endif %}
+  <main>
+    {% if ok %}<div class="succes">{{ ok }}</div>{% endif %}
+    {% if erreur %}<div class="erreur">{{ erreur }}</div>{% endif %}
+    {% block contenu %}{% endblock %}
+  </main>
+  <footer>{{ NOM }} · 17 pays de l'espace OHADA (SYSCOHADA révisé) · Réalisé avec Account's</footer>
+</div>
+{% else %}
+<div class="public-fond">
+  <main>
+    {% if ok %}<div class="succes">{{ ok }}</div>{% endif %}
+    {% if erreur %}<div class="erreur">{{ erreur }}</div>{% endif %}
+    {% block public %}{{ self.contenu() }}{% endblock %}
+  </main>
+  <footer>{{ NOM }} · 17 pays de l'espace OHADA (SYSCOHADA révisé) · Réalisé avec Account's</footer>
+</div>
+{% endif %}
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
+(function(){const b=document.getElementById('menu-btn'),v=document.getElementById('voile');if(!b)return;
+const t=o=>document.body.classList.toggle('menu-ouvert',o);b.onclick=()=>t(true);v.onclick=()=>t(false);})();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

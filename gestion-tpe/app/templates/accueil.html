@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% from '_icones.html' import ic %}
+{% block titre %}Connexion{% endblock %}
+{% block contenu %}
+<div class="accueil">
+  <div class="pitch">
+    <img src="/static/logo_accounts.jpg" alt="Account's">
+    <h1>Votre boutique <em>sous contrôle</em>, même quand vous n'êtes pas là.</h1>
+    <p>Devis, factures, caisse, stocks et livres de recettes conformes SYSCOHADA, sur téléphone ou ordinateur.</p>
+    <div class="atouts">
+      <span>{{ ic('facture', 18) }}Factures à votre charte</span>
+      <span>{{ ic('caisse', 18) }}Clôture de caisse et écarts</span>
+      <span>{{ ic('stocks', 18) }}Stock et inventaire</span>
+      <span>{{ ic('livres', 18) }}Livres prêts pour le comptable</span>
+    </div>
+  </div>
+  <div class="pile">
+    <div class="carte connexion">
+      <h2 style="font-size:22px">Se connecter</h2>
+      <p class="sous" style="margin-bottom:16px">Gérant : mot de passe. Employé : code PIN.</p>
+      <form method="post" action="/connexion" class="pile">
+        <div><label for="identifiant">Identifiant</label><input id="identifiant" name="identifiant" autocomplete="username" required autocapitalize="none"></div>
+        <div><label for="secret">Mot de passe ou code PIN</label><input id="secret" name="secret" type="password" autocomplete="current-password" required></div>
+        <button class="bouton">Se connecter</button>
+      </form>
+    </div>
+    <div class="carte connexion" style="background:var(--lavande);border-color:#DED6F7">
+      <h2>Première utilisation ?</h2>
+      <p class="aide">Saisissez la clé de licence reçue après votre achat pour créer l'espace de votre société.</p>
+      <div class="actions" style="margin-top:12px"><a class="bouton secondaire" href="/activer">Activer ma clé {{ ic('fleche', 16) }}</a><a href="{{ BOUTIQUE }}" class="aide">Acheter le kit</a></div>
+      {% if demo %}<p class="info" style="margin:14px 0 0">Mode démonstration : toute clé commençant par DEMO- est acceptée.</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

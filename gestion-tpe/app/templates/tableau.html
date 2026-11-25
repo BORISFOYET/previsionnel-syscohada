@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% from '_icones.html' import ic %}
+{% block titre %}Tableau de bord{% endblock %}
+{% macro tendance(v, inverse=False) -%}
+  {%- if v is not none -%}{%- set bon = (v >= 0) != inverse -%}
+  <span class="tendance {{ '' if bon else 'neg' }}">{{ ic('haut' if v >= 0 else 'bas', 14) }}{{ '%+.1f'|format(v * 100)|replace('.', ',') }} %<small>vs mois précédent</small></span>
+  {%- endif -%}
+{%- endmacro %}
+{% set couleurs = ['#331C77', '#FF2FED', '#3B6FE0', '#8E6BE8', '#FF9AF5', '#C9C3DB'] %}
+{% block contenu %}
+<div class="entete-page">
+  <div><h1>Bonjour {{ u.nom.split()[0] }}</h1><p class="sous">Voici l'activité de {{ soc.raison_sociale }} du {{ tb.debut|d }} au {{ tb.fin|d }}, en {{ soc.devise_lib }}.</p></div>
+  <form method="get" class="filtres" style="margin:0"><input type="month" name="mois" value="{{ tb.mois }}" aria-label="Mois" onchange="this.form.submit()"></form>
+</div>
+
+{% if vide %}
+<div class="carte" style="background:var(--lavande);border-color:#DED6F7">
+  <div class="carte-tete"><div><h2>Bienvenue ! Trois étapes pour démarrer</h2><p class="sous">Comptez 5 minutes.</p></div></div>
+  <div class="raccourcis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:0">
+    <a class="raccourci" href="/societe"><span>{{ ic('societe') }}</span>1. Compléter ma société</a>
+    <a class="raccourci" href="/articles"><span>{{ ic('articles') }}</span>2. Créer mes articles</a>
+    <a class="raccourci" href="/equipe"><span>{{ ic('equipe') }}</span>3. Ajouter mes employés</a>
+  </div>
+</div>
+{% endif %}
+
+<div class="grille-tb">
+  <section class="carte c8">
+    <div class="deux-col" style="display:grid;grid-template-columns:1fr 220px;gap:24px">
+      <div style="min-width:0">
+        <div class="carte-tete">
+          <div><div class="grand">{{ tb.ca_ht|m }} <small>{{ soc.devise_lib }}</small></div><p class="sous">Chiffre d'affaires HT du mois</p>{{ tendance(tb.var.ca) }}</div>
+          <div class="legende"><span><i style="background:var(--violet)"></i>Recettes</span><span><i style="background:var(--rose)"></i>Dépenses</span></div>
+        </div>
+        <p class="aide" style="margin:0">Encaissements et dépenses des 7 derniers jours</p>
+        <div class="barres">
+          {% for j in tb.serie %}
+          <div class="jour {{ 'aujourdhui' if j.date == aujourdhui }}" tabindex="0">
+            <div class="pile-b">
+              <i class="b rec" style="height:{{ (j.recettes / tb.max_serie * 100)|round(1) }}%"></i>
+              <i class="b dep" style="height:{{ (j.depenses / tb.max_serie * 100)|round(1) }}%"></i>
+            </div>
+            <div class="bulle"><b>{{ j.jour }} {{ j.date|d }}</b>Recettes {{ j.recettes|m }}<br>Dépenses {{ j.depenses|m }}</div>
+            <span>{{ j.jour }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><small>Encaissé</small><strong>{{ tb.recettes|m }}</strong>{{ tendance(tb.var.recettes) }}</div>
+        <div class="kpi"><small>Dépensé</small><strong>{{ tb.depenses|m }}</strong>{{ tendance(tb.var.depenses, inverse=True) }}</div>
+        <div class="kpi"><small>Marge sur ventes</small><strong>{{ tb.marge|m }}</strong>{% if tb.taux_marge is not none %}<span class="tendance"><small style="margin:0">{{ '%.0f'|format(tb.taux_marge * 100) }} % du chiffre d'affaires</small></span>{% endif %}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="carte c4">
+    <div class="carte-tete"><div><h2>Trésorerie</h2><p class="sous">Soldes à ce jour</p></div><a class="ajout" href="/caisse">Caisse</a></div>
+    <div class="comptes">
+      {% for k, v in MODES.items() %}<div class="compte {{ k }}"><small>{{ v }}</small><strong>{{ tb.soldes[k]|m }} {{ soc.devise_lib }}</strong></div>{% endfor %}
+    </div>
+    <div class="raccourcis">
+      <a class="raccourci" href="/vente"><span>{{ ic('vente') }}</span>Vendre</a>
+      <a class="raccourci" href="/documents/nouveau?type=devis"><span>{{ ic('devis') }}</span>Devis</a>
+      <a class="raccourci" href="/caisse"><span>{{ ic('depense') }}</span>Dépense</a>
+      <a class="raccourci" href="/caisse#cloture"><span>{{ ic('cloture') }}</span>Clôture</a>
+    </div>
+  </section>
+
+  <section class="carte c4">
+    <div class="carte-tete"><div><h2>Dépenses du mois</h2><p class="sous">Par rubrique du livre des dépenses</p></div></div>
+    <div class="grand" style="font-size:30px">{{ tb.total_depenses_rub|m }} <small>{{ soc.devise_lib }}</small></div>
+    {% if tb.rubriques %}
+    <div class="segments">{% for r in tb.rubriques %}<i style="flex:{{ r.part }};background-color:{{ couleurs[loop.index0 % 6] }}" title="{{ r.categorie }}"></i>{% endfor %}</div>
+    <ul class="repartition">{% for r in tb.rubriques %}<li><i style="background:{{ couleurs[loop.index0 % 6] }}"></i><span>{{ r.categorie }}</span><b>{{ '%.0f'|format(r.part * 100) }} %</b></li>{% endfor %}</ul>
+    {% else %}<p class="vide">Aucune dépense ce mois-ci.</p>{% endif %}
+  </section>
+
+  <section class="carte c4">
+    <div class="carte-tete"><div><h2>Santé des encaissements</h2><p class="sous">Part des factures du mois déjà payée</p></div></div>
+    <div class="grand" style="font-size:30px">{{ tb.facture_ttc|m }} <small>facturés TTC</small></div>
+    {% set t = tb.taux_encaissement if tb.taux_encaissement is not none else 0 %}
+    <div class="jauge">
+      <svg viewBox="0 0 200 112" role="img" aria-label="Taux d'encaissement {{ '%.0f'|format(t * 100) }} %">
+        <defs><linearGradient id="g-jauge" x1="0" x2="1"><stop offset="0" stop-color="#FF2FED"/><stop offset="1" stop-color="#3B6FE0"/></linearGradient></defs>
+        <path d="M18 100 A82 82 0 0 1 182 100" fill="none" stroke="#F1EEF8" stroke-width="22" stroke-linecap="round" pathLength="100"/>
+        <path d="M18 100 A82 82 0 0 1 182 100" fill="none" stroke="url(#g-jauge)" stroke-width="22" stroke-linecap="round" pathLength="100" stroke-dasharray="{{ [t * 100, 0.01]|max }} 100"/>
+      </svg>
+      <div class="val"><strong>{{ '%.0f'|format(t * 100) }} %</strong><small>encaissé</small></div>
+    </div>
+    <p class="aide" style="text-align:center">Reste à encaisser sur toutes les factures : <strong>{{ tb.total_impayes|m }}</strong></p>
+  </section>
+
+  <section class="carte c4">
+    <div class="carte-tete"><div><h2>Ventes par vendeur</h2><p class="sous">Factures validées du mois</p></div></div>
+    {% set total_v = tb.par_vendeur|sum(attribute='total') or 1 %}
+    <ul class="liste">
+      {% for v in tb.par_vendeur|sort(attribute='total', reverse=True) %}
+      <li><span class="avatar">{{ v.nom.split()|map('first')|join('')|upper|truncate(2, True, '') }}</span>
+        <div><strong>{{ v.nom }}</strong><small>{{ v.nb }} vente{{ 's' if v.nb > 1 }}</small><div class="barre-prog"><i style="width:{{ (v.total / total_v * 100)|round(1) }}%"></i></div></div>
+        <span class="montant">{{ v.total|m }}</span></li>
+      {% else %}<li class="vide">Aucune vente ce mois-ci.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="carte c4">
+    <div class="carte-tete"><div><h2>À surveiller</h2><p class="sous">Ce qui demande votre attention</p></div></div>
+    <ul class="liste">
+      {% for e in tb.ecarts[:3] %}<li><span class="puce depense">{{ ic('caisse', 18) }}</span><div><strong>Écart de caisse</strong><small>{{ e.date|d }} · {{ e.nom }}</small></div><span class="montant {{ 'neg' if e.ecart < 0 }}">{{ e.ecart|m }}</span></li>{% endfor %}
+      {% for a in tb.alertes[:3] %}<li><span class="puce neutre">{{ ic('stocks', 18) }}</span><a href="/stocks"><strong>{{ a.nom }}</strong><small>Stock bas, seuil {{ a.seuil_alerte|q }}</small></a><span class="montant">{{ a.stock|q }}</span></li>{% endfor %}
+      {% for i in tb.impayes[:4] %}<li><span class="puce neutre">{{ ic('facture', 18) }}</span><a href="/documents/{{ i.id }}"><strong>{{ i.client_nom }}</strong><small>{{ i.numero }}{% if i.echeance and i.echeance < aujourdhui %} · <span class="neg">en retard</span>{% endif %}</small></a><span class="montant">{{ i.reste|m }}</span></li>{% endfor %}
+      {% if not (tb.ecarts or tb.alertes or tb.impayes) %}<li class="vide">Rien à signaler.</li>{% endif %}
+    </ul>
+  </section>
+
+  <section class="carte c4">
+    <div class="carte-tete"><div><h2>Derniers mouvements</h2><p class="sous">Recettes et dépenses</p></div><a class="ajout" href="/livres">Livres</a></div>
+    <ul class="liste">
+      {% for m in tb.mouvements %}<li><span class="puce {{ m.sens }}">{{ ic('haut' if m.sens == 'recette' else 'bas', 16) }}</span>
+        <div><strong>{{ m.libelle }}</strong><small>{{ m.date|d }} · {{ MODES[m.mode] }}</small></div>
+        <span class="montant {{ 'plus' if m.sens == 'recette' else 'moins' }}">{{ '+' if m.sens == 'recette' else '−' }} {{ m.montant|m }}</span></li>
+      {% else %}<li class="vide">Aucun mouvement.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="carte c4">
+    <div class="carte-tete"><div><h2>Marge par article</h2><p class="sous">Top 5 du mois</p></div></div>
+    {% set max_m = (marges|map(attribute='marge')|max) if marges else 1 %}
+    <ul class="liste">
+      {% for a in marges[:5] %}<li><div><strong>{{ a.designation }}</strong><small>{{ a.quantite|q }} vendus · {{ '%.0f'|format(a.taux * 100) }} % de marge</small>
+        <div class="barre-prog"><i style="width:{{ ([a.marge, 0]|max / (max_m or 1) * 100)|round(1) }}%"></i></div></div><span class="montant">{{ a.marge|m }}</span></li>
+      {% else %}<li class="vide">Aucune vente ce mois-ci.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

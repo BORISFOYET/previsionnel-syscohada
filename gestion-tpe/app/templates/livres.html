@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block titre %}Livres{% endblock %}
+{% block contenu %}
+<h1>Livre {{ 'des recettes' if sens == 'recette' else 'des dépenses' }}</h1>
+<form class="filtres" method="get">
+  <input type="month" name="mois" value="{{ mois }}" aria-label="Mois">
+  <select name="sens" aria-label="Livre"><option value="recette" {{ 'selected' if sens == 'recette' }}>Recettes</option><option value="depense" {{ 'selected' if sens == 'depense' }}>Dépenses</option></select>
+  <button class="ajout">Afficher</button>
+  <a class="bouton" href="/livres/export?periode={{ mois }}">Excel du mois</a>
+  <a class="bouton secondaire" href="/livres/export?periode={{ mois[:4] }}">Excel de l'année {{ mois[:4] }}</a>
+</form>
+<div class="chiffres">
+  <div class="chiffre"><small>CA HT facturé</small><strong>{{ tva.ca_ht|m }}</strong></div>
+  <div class="chiffre"><small>TVA collectée</small><strong>{{ tva.collectee|m }}</strong></div>
+  <div class="chiffre"><small>TVA déductible</small><strong>{{ tva.deductible|m }}</strong></div>
+  <div class="chiffre"><small>TVA à reverser (estimation)</small><strong>{{ tva.a_reverser|m }}</strong></div>
+</div>
+<div class="carte defile"><table class="tableau">
+  <tr><th>Date</th><th>Pièce</th><th>Libellé</th><th>Rubrique</th><th>Mode</th><th class="n">Montant</th><th class="n">dont TVA</th><th></th></tr>
+  {% for m in mvts %}<tr><td>{{ m.date|d }}</td><td>{{ m.numero }}</td><td>{{ m.libelle }}<small>{{ m.tiers }}</small></td><td>{{ cats.get(m.categorie, m.categorie) }}</td><td>{{ MODES[m.mode] }}</td>
+    <td class="n">{{ m.montant|m }}</td><td class="n">{{ m.tva|m if m.tva }}</td>
+    <td>{% if not m.cloture_id %}<form method="post" action="/tresorerie/{{ m.id }}/annuler" onsubmit="return confirm('Annuler ce mouvement ?')"><button class="lien">Annuler</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="8" class="vide">Aucun mouvement ce mois-ci.</td></tr>{% endfor %}
+  <tr class="fort"><td colspan="5">Total</td><td class="n">{{ total|m }}</td><td colspan="2"></td></tr>
+</table></div>
+<p class="aide">Présentation du système minimal de trésorerie (SYSCOHADA révisé) : recettes et dépenses enregistrées au jour le jour, par ordre chronologique. La TVA affichée est une estimation à faire valider par votre comptable.</p>
+{% endblock %}

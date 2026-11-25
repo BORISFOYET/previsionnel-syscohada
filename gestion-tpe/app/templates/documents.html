@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block titre %}{{ titre }}{% endblock %}
+{% block contenu %}
+<div class="titre-actions">
+  <h1>{{ titre }}</h1>
+  {% if u.role == 'gerant' and type != 'avoir' %}<a class="bouton" href="/documents/nouveau?type={{ type }}">{{ 'Nouveau devis' if type == 'devis' else 'Nouvelle facture' }}</a>{% endif %}
+</div>
+<div class="filtres">
+  {% if type == 'facture' %}{% for k, v in [('', 'Toutes'), ('brouillon', 'Brouillons'), ('impaye', 'Impayées'), ('annule', 'Annulées')] %}<a href="/documents?type=facture&statut={{ k }}" class="{{ 'actif' if statut == k }}">{{ v }}</a>{% endfor %} · <a href="/documents?type=avoir">Avoirs</a>
+  {% elif type == 'devis' %}{% for k, v in [('', 'Tous'), ('brouillon', 'En attente'), ('accepte', 'Acceptés'), ('refuse', 'Refusés'), ('converti', 'Facturés')] %}<a href="/documents?type=devis&statut={{ k }}" class="{{ 'actif' if statut == k }}">{{ v }}</a>{% endfor %}{% endif %}
+</div>
+<div class="carte defile"><table class="tableau">
+  <tr><th>N°</th><th>Date</th><th>Client</th><th class="n">Total TTC</th>{% if type == 'facture' %}<th class="n">Reste dû</th>{% endif %}<th>État</th></tr>
+  {% for d in docs %}<tr><td><a href="/documents/{{ d.id }}">{{ d.numero or 'Brouillon' }}</a></td><td>{{ d.date|d }}</td><td>{{ d.client_nom }}</td>
+    <td class="n">{{ d.total_ttc|m }}</td>{% if type == 'facture' %}<td class="n">{{ (d.total_ttc - d.paye)|m if d.statut == 'valide' else '' }}</td>{% endif %}
+    <td>{% include '_statut.html' %}</td></tr>
+  {% else %}<tr><td colspan="6" class="vide">Rien à afficher.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block titre %}Clients{% endblock %}
+{% block contenu %}
+<h1>Clients</h1>
+<details class="carte" {{ 'open' if not clients }}>
+  <summary><span class="num">+</span><h2>Nouveau client</h2></summary>
+  <form method="post" action="/clients" class="pile">
+    <div class="grille">
+      <div><label for="nom">Nom ou raison sociale</label><input id="nom" name="nom" required></div>
+      <div><label for="telephone">Téléphone</label><input id="telephone" name="telephone" inputmode="tel"></div>
+      <div><label for="email">E-mail</label><input id="email" name="email" type="email"></div>
+      <div><label for="adresse">Adresse</label><input id="adresse" name="adresse"></div>
+      <div><label for="niu">NIU / IFU</label><input id="niu" name="niu"></div>
+    </div>
+    <button class="bouton">Enregistrer</button>
+  </form>
+</details>
+<div class="carte defile"><table class="tableau">
+  <tr><th>Client</th><th>Téléphone</th><th class="n">Reste dû</th><th></th></tr>
+  {% for c in clients %}<tr><td>{{ c.nom }}<small>{{ c.adresse }}</small></td><td>{{ c.telephone }}</td><td class="n">{{ (dus.get(c.id) or 0)|m }}</td>
+    <td>{% if u.role == 'gerant' %}<a href="/documents/nouveau?type=facture&client={{ c.id }}">Facturer</a> · <a href="/documents/nouveau?type=devis&client={{ c.id }}">Devis</a>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="4" class="vide">Aucun client pour l'instant.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block titre %}Équipe{% endblock %}
+{% block contenu %}
+<h1>Équipe</h1>
+<p class="sous">Les employés se connectent avec leur identifiant et un code PIN. Ils peuvent vendre, encaisser et clôturer la caisse, mais ne peuvent ni modifier les prix, ni annuler une vente, ni toucher au stock.</p>
+<div class="carte"><table class="tableau">
+  <tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>État</th><th></th></tr>
+  {% for m in membres %}<tr><td>{{ m.nom }}</td><td>{{ m.identifiant }}</td><td>{{ 'Gérant' if m.role == 'gerant' else 'Employé' }}</td><td>{{ 'Actif' if m.actif else 'Désactivé' }}</td>
+    <td>{% if m.role == 'employe' %}<form method="post" action="/equipe/{{ m.id }}/actif"><button class="lien">{{ 'Désactiver' if m.actif else 'Réactiver' }}</button></form>{% endif %}</td></tr>{% endfor %}
+</table></div>
+<form method="post" action="/equipe" class="carte pile">
+  <h2>Ajouter un employé ({{ max_employes }} maximum)</h2>
+  <div class="grille">
+    <div><label for="nom">Nom</label><input id="nom" name="nom" required></div>
+    <div><label for="identifiant">Identifiant</label><input id="identifiant" name="identifiant" required autocapitalize="none" placeholder="ex. awa.boutique"></div>
+    <div><label for="pin">Code PIN (4 à 8 chiffres)</label><input id="pin" name="pin" inputmode="numeric" pattern="[0-9]{4,8}" required></div>
+  </div>
+  <button class="bouton">Ajouter</button>
+</form>
+<form method="post" action="/motdepasse" class="carte pile">
+  <h2>Changer mon mot de passe</h2>
+  <div class="grille">
+    <div><label for="actuel">Mot de passe actuel</label><input id="actuel" name="actuel" type="password" required></div>
+    <div><label for="nouveau">Nouveau mot de passe</label><input id="nouveau" name="nouveau" type="password" minlength="8" required></div>
+  </div>
+  <button class="ajout">Modifier</button>
+</form>
+{% endblock %}

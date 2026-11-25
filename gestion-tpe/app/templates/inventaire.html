@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block titre %}Inventaire{% endblock %}
+{% block contenu %}
+<h1>Inventaire</h1>
+{% if ecarts is not none %}
+<div class="carte"><h2>Résultat</h2>
+  {% if ecarts %}<table class="tableau"><tr><th>Article</th><th class="n">Théorique</th><th class="n">Compté</th><th class="n">Écart</th><th class="n">Valeur</th></tr>
+  {% for e in ecarts %}<tr class="{{ 'bas' if e.ecart < 0 }}"><td>{{ e.article }}</td><td class="n">{{ e.theorique|q }}</td><td class="n">{{ e.compte|q }}</td><td class="n">{{ e.ecart|q }}</td><td class="n">{{ e.valeur|m }}</td></tr>{% endfor %}
+  <tr class="fort"><td colspan="4">Écart total</td><td class="n">{{ ecarts|sum(attribute='valeur')|m }} {{ soc.devise_lib }}</td></tr></table>
+  {% else %}<p class="succes">Aucun écart : le stock compté correspond au stock théorique.</p>{% endif %}
+</div>
+{% endif %}
+<form method="post" action="/stocks/inventaire" class="carte pile">
+  <p class="aide">Comptez chaque article et saisissez la quantité trouvée. Laissez vide ce que vous n'avez pas compté.</p>
+  <table class="tableau"><tr><th>Article</th><th class="n">Stock théorique</th><th>Quantité comptée</th></tr>
+  {% for a in articles %}<tr><td>{{ a.nom }}</td><td class="n">{{ a.stock|q }}</td><td><input name="a_{{ a.id }}" inputmode="decimal" aria-label="Quantité comptée {{ a.nom }}"></td></tr>{% endfor %}</table>
+  <button class="bouton">Enregistrer l'inventaire</button>
+</form>
+{% endblock %}

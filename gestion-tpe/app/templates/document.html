@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% set noms = {'devis': 'Devis', 'facture': 'Facture', 'avoir': 'Avoir'} %}
+{% block titre %}{{ noms[doc.type] }} {{ doc.numero or '' }}{% endblock %}
+{% block contenu %}
+<div class="titre-actions">
+  <h1>{{ noms[doc.type] }} {{ doc.numero or '(brouillon)' }} {% set d = doc %}{% include '_statut.html' %}</h1>
+  <div class="actions">
+    <a class="bouton" href="/documents/{{ doc.id }}/pdf" target="_blank">PDF</a>
+    <a class="bouton secondaire" target="_blank" href="https://wa.me/?text={{ (noms[doc.type] ~ ' ' ~ (doc.numero or '') ~ ' de ' ~ soc.raison_sociale ~ ' : ' ~ (doc.total_ttc|m) ~ ' ' ~ soc.devise_lib ~ ' TTC.')|urlencode }}">WhatsApp</a>
+  </div>
+</div>
+<div class="carte">
+  <p><strong>{{ doc.client_nom or 'Sans client' }}</strong> · {{ doc.date|d }}{% if doc.echeance %} · {{ 'valable jusqu’au' if doc.type == 'devis' else 'échéance' }} {{ doc.echeance|d }}{% endif %}</p>
+  {% for l in lies %}<p class="aide">{{ noms[l.type] }} lié : <a href="/documents/{{ l.id }}">{{ l.numero or 'brouillon' }}</a></p>{% endfor %}
+  <div class="defile"><table class="tableau">
+    <tr><th>Désignation</th><th class="n">Qté</th><th class="n">P.U. HT</th><th class="n">Remise</th><th class="n">TVA</th><th class="n">Total HT</th></tr>
+    {% for l in lignes %}<tr><td>{{ l.designation }}</td><td class="n">{{ l.quantite|q }}</td><td class="n">{{ l.prix|m }}</td><td class="n">{{ (l.remise|q ~ ' %') if l.remise else '' }}</td><td class="n">{{ l.tva|pct }}</td><td class="n">{{ calcul(l.quantite, l.prix, l.remise, l.tva)[0]|m }}</td></tr>{% endfor %}
+    <tr><td colspan="5" class="n">Total HT</td><td class="n">{{ t.ht|m }}</td></tr>
+    <tr><td colspan="5" class="n">TVA</td><td class="n">{{ t.tva|m }}</td></tr>
+    <tr class="fort"><td colspan="5" class="n">Total TTC</td><td class="n">{{ t.ttc|m }} {{ soc.devise_lib }}</td></tr>
+    {% if doc.type == 'facture' and doc.statut == 'valide' %}<tr><td colspan="5" class="n">Reste à payer</td><td class="n">{{ (doc.total_ttc - doc.paye)|m }}</td></tr>{% endif %}
+  </table></div>
+  {% if doc.note %}<p class="aide">{{ doc.note }}</p>{% endif %}
+</div>
+
+{% if doc.type == 'facture' and doc.statut == 'valide' and doc.paye < doc.total_ttc %}
+<form method="post" action="/documents/{{ doc.id }}/encaisser" class="carte pile">
+  <h2>Enregistrer un règlement</h2>
+  <div class="grille">
+    <div><label for="montant">Montant reçu</label><input id="montant" name="montant" inputmode="numeric" value="{{ doc.total_ttc - doc.paye }}" required></div>
+    <div><label for="mode">Mode</label><select id="mode" name="mode">{% for k, v in MODES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+    <div><label for="date">Date</label><input id="date" name="date" type="date" value="{{ aujourdhui }}" max="{{ aujourdhui }}"></div>
+  </div>
+  <button class="bouton">Encaisser</button>
+</form>
+{% endif %}
+
+{% if reglements %}<div class="carte"><h2>Règlements</h2><table class="tableau">
+  {% for r in reglements %}<tr class="{{ 'barre' if r.annule }}"><td>{{ r.date|d }}</td><td>Pièce {{ r.numero }}</td><td>{{ MODES[r.mode] }}</td><td class="n">{{ r.montant|m }}</td></tr>{% endfor %}
+</table></div>{% endif %}
+
+{% if u.role == 'gerant' %}
+<div class="carte actions">
+  {% if doc.statut == 'brouillon' %}
+    <a class="ajout" href="/documents/{{ doc.id }}/modifier">Modifier</a>
+    {% if doc.type == 'facture' %}
+      <form method="post" action="/documents/{{ doc.id }}/valider"><button class="bouton">Valider la facture</button></form>
+      <form method="post" action="/documents/{{ doc.id }}/supprimer" onsubmit="return confirm('Supprimer ce brouillon ?')"><button class="lien">Supprimer le brouillon</button></form>
+    {% endif %}
+  {% endif %}
+  {% if doc.type == 'devis' and doc.statut in ('brouillon', 'accepte') %}
+    <form method="post" action="/documents/{{ doc.id }}/convertir"><button class="bouton">Transformer en facture</button></form>
+    {% if doc.statut == 'brouillon' %}<form method="post" action="/documents/{{ doc.id }}/statut"><input type="hidden" name="statut" value="accepte"><button class="ajout">Marquer accepté</button></form>{% endif %}
+    <form method="post" action="/documents/{{ doc.id }}/statut"><input type="hidden" name="statut" value="refuse"><button class="lien">Marquer refusé</button></form>
+  {% endif %}
+  {% if doc.type == 'facture' and doc.statut == 'valide' %}
+    <form method="post" action="/documents/{{ doc.id }}/avoir" class="ligne-form" onsubmit="return confirm('Annuler cette facture par un avoir ? Le stock sera remis.')">
+      <input name="motif" placeholder="Motif de l'avoir" aria-label="Motif"><button class="lien">Annuler par un avoir</button></form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
