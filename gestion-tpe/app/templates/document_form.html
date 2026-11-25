@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block titre %}{{ 'Devis' if doc.type == 'devis' else 'Facture' }}{% endblock %}
+{% block contenu %}
+<h1>{{ ('Modifier le ' if doc.id else 'Nouveau ') ~ 'devis' if doc.type == 'devis' else ('Modifier la facture' if doc.id else 'Nouvelle facture') }}</h1>
+<form method="post" action="/documents" class="carte pile" id="form-doc">
+  <input type="hidden" name="type" value="{{ doc.type }}">{% if doc.id %}<input type="hidden" name="id" value="{{ doc.id }}">{% endif %}
+  <div class="grille">
+    <div><label for="client_id">Client</label><select id="client_id" name="client_id" {{ 'required' if doc.type == 'facture' }}>
+      <option value="">Choisir…</option>{% for c in clients %}<option value="{{ c.id }}" {{ 'selected' if doc.client_id == c.id }}>{{ c.nom }}</option>{% endfor %}</select>
+      <p class="aide"><a href="/clients">Ajouter un client</a></p></div>
+    <div><label for="date">Date</label><input id="date" name="date" type="date" value="{{ doc.date }}" required></div>
+    <div><label for="echeance">{{ 'Valable jusqu’au' if doc.type == 'devis' else 'Échéance de paiement' }}</label><input id="echeance" name="echeance" type="date" value="{{ doc.echeance or '' }}"></div>
+  </div>
+  <h3>Lignes</h3>
+  <div id="lignes" class="lignes"></div>
+  <button type="button" class="ajout" id="ajout">+ Ajouter une ligne</button>
+  <div class="totaux"><span>Total HT <strong id="tht">0</strong></span><span>TVA <strong id="ttva">0</strong></span><span>Total TTC <strong id="tttc">0</strong> {{ soc.devise_lib }}</span></div>
+  <div><label for="note">Note (conditions, délai de livraison…)</label><textarea id="note" name="note" rows="2">{{ doc.note or '' }}</textarea></div>
+  <div class="actions">
+    <button class="bouton secondaire" name="valider" value="0">Enregistrer {{ 'le devis' if doc.type == 'devis' else 'en brouillon' }}</button>
+    {% if doc.type == 'facture' %}<button class="bouton" name="valider" value="1">Valider la facture</button>{% endif %}
+  </div>
+  {% if doc.type == 'facture' %}<p class="aide">Une facture validée reçoit son numéro définitif et ne peut plus être modifiée : une erreur se corrige par un avoir.</p>{% endif %}
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+const CAT = {{ catalogue_json|safe }}, INIT = {{ lignes_json|safe }}, TVA = {{ tva_defaut }};
+const fmt = n => Math.round(n).toLocaleString('fr-FR');
+const num = v => parseFloat(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
+const opts = CAT.map(a => `<option value="${a.id}">${a.nom.replace(/</g, '&lt;')}</option>`).join('');
+function ligne(l){
+  l = l || {art: '', des: '', q: 1, pu: '', rem: 0, tva: TVA};
+  const d = document.createElement('div'); d.className = 'ligne l-doc';
+  d.innerHTML = `<button type="button" class="suppr" aria-label="Supprimer la ligne">×</button>
+    <div><label>Article</label><select name="art"><option value="">Saisie libre</option>${opts}</select></div>
+    <div class="large"><label>Désignation</label><input name="des" required></div>
+    <div><label>Quantité</label><input name="q" inputmode="decimal"></div>
+    <div><label>Prix unitaire HT</label><input name="pu" inputmode="numeric"></div>
+    <div><label>Remise %</label><input name="rem" inputmode="decimal"></div>
+    <div><label>TVA %</label><input name="tva" inputmode="decimal"></div>
+    <div><label>Total HT</label><output class="lt">0</output></div>`;
+  d.querySelector('[name=art]').value = l.art || '';
+  for (const k of ['des', 'q', 'pu', 'rem', 'tva']) d.querySelector(`[name=${k}]`).value = l[k] ?? '';
+  d.querySelector('[name=art]').onchange = e => { const a = CAT.find(x => x.id == e.target.value); if (a){ d.querySelector('[name=des]').value = a.nom; d.querySelector('[name=pu]').value = a.prix; d.querySelector('[name=tva]').value = +(a.tva * 100).toFixed(4); } calc(); };
+  d.querySelector('.suppr').onclick = () => { d.remove(); calc(); };
+  d.oninput = calc;
+  document.getElementById('lignes').appendChild(d);
+}
+function calc(){
+  let ht = 0, tv = 0;
+  document.querySelectorAll('.l-doc').forEach(d => {
+    const h = Math.round(num(d.querySelector('[name=q]').value) * Math.round(num(d.querySelector('[name=pu]').value)) * (1 - num(d.querySelector('[name=rem]').value) / 100));
+    d.querySelector('.lt').textContent = fmt(h); ht += h; tv += Math.round(h * num(d.querySelector('[name=tva]').value) / 100);
+  });
+  document.getElementById('tht').textContent = fmt(ht); document.getElementById('ttva').textContent = fmt(tv); document.getElementById('tttc').textContent = fmt(ht + tv);
+}
+(INIT.length ? INIT : [null]).forEach(ligne); calc();
+document.getElementById('ajout').onclick = () => ligne();
+</script>
+{% endblock %}

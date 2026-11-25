@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block titre %}Vente{% endblock %}
+{% block contenu %}
+<h1>Vente au comptoir</h1>
+<p class="sous">Touchez un article pour l'ajouter. La vente crée la facture, sort le stock et entre l'argent en caisse.</p>
+<div class="vente">
+  <div class="carte">
+    <input id="recherche" placeholder="Rechercher un article…" aria-label="Rechercher un article">
+    <div id="catalogue" class="tuiles">
+      {% for a in catalogue %}<button type="button" class="tuile" data-id="{{ a.id }}"><strong>{{ a.nom }}</strong><span>{{ (a.prix_vente + arrondi(a.prix_vente * a.tva))|m }} TTC</span>{% if a.type == 'produit' %}<small class="{{ 'bas' if a.stock <= a.seuil_alerte }}">Stock : {{ a.stock|q }}</small>{% endif %}</button>
+      {% else %}<p class="vide">Aucun article. {% if u.role == 'gerant' %}<a href="/articles">Créer le catalogue</a>{% else %}Demandez au gérant de créer le catalogue.{% endif %}</p>{% endfor %}
+    </div>
+  </div>
+  <form method="post" action="/vente" class="carte panier" id="panier">
+    <h2>Panier</h2>
+    <div id="lignes" class="lignes-panier"><p class="vide">Panier vide.</p></div>
+    <div class="total-panier">Total : <strong id="total">0</strong> {{ soc.devise_lib }}</div>
+    <label for="mode">Paiement</label>
+    <div class="modes">{% for k, v in MODES.items() %}<label class="choix"><input type="radio" name="mode" value="{{ k }}" {{ 'checked' if loop.first }}> {{ v }}</label>{% endfor %}</div>
+    <button class="bouton" id="valider" disabled>Encaisser la vente</button>
+  </form>
+</div>
+<div class="carte defile">
+  <h2>Ventes du jour</h2>
+  <table class="tableau"><tr><th>N°</th><th class="n">Montant TTC</th><th></th></tr>
+  {% for v in ventes %}<tr><td>{{ v.numero }}</td><td class="n">{{ v.total_ttc|m }}</td><td><a href="/documents/{{ v.id }}">Voir</a> · <a href="/documents/{{ v.id }}/pdf" target="_blank">Reçu PDF</a></td></tr>
+  {% else %}<tr><td colspan="3" class="vide">Aucune vente aujourd'hui.</td></tr>{% endfor %}
+  <tr><th>Total</th><th class="n">{{ ventes|sum(attribute='total_ttc')|m }}</th><th></th></tr></table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const CAT = {{ catalogue_json|safe }};
+const panier = new Map();
+const fmt = n => Math.round(n).toLocaleString('fr-FR');
+function rendre(){
+  const box = document.getElementById('lignes'); box.innerHTML = '';
+  let total = 0;
+  for (const [id, q] of panier){
+    const a = CAT.find(x => x.id == id);
+    const ttc = Math.round(a.prix * q) + Math.round(Math.round(a.prix * q) * a.tva);
+    total += ttc;
+    const d = document.createElement('div'); d.className = 'ligne-panier';
+    d.innerHTML = `<input type="hidden" name="art" value="${id}"><span>${a.nom}</span>
+      <button type="button" class="pm" data-d="-1" aria-label="Moins">−</button>
+      <input name="q" value="${q}" inputmode="decimal" aria-label="Quantité">
+      <button type="button" class="pm" data-d="1" aria-label="Plus">+</button><strong>${fmt(ttc)}</strong>`;
+    d.querySelectorAll('.pm').forEach(b => b.onclick = () => { const n = (panier.get(id) || 0) + +b.dataset.d; n > 0 ? panier.set(id, n) : panier.delete(id); rendre(); });
+    d.querySelector('input[name=q]').onchange = e => { const n = parseFloat(e.target.value.replace(',', '.')) || 0; n > 0 ? panier.set(id, n) : panier.delete(id); rendre(); };
+    box.appendChild(d);
+  }
+  if (!panier.size) box.innerHTML = '<p class="vide">Panier vide.</p>';
+  document.getElementById('total').textContent = fmt(total);
+  document.getElementById('valider').disabled = !panier.size;
+}
+document.querySelectorAll('.tuile').forEach(t => t.onclick = () => { const id = +t.dataset.id; panier.set(id, (panier.get(id) || 0) + 1); rendre(); });
+document.getElementById('recherche').oninput = e => { const s = e.target.value.toLowerCase(); document.querySelectorAll('.tuile').forEach(t => t.hidden = !t.textContent.toLowerCase().includes(s)); };
+document.getElementById('panier').onsubmit = () => { document.getElementById('valider').disabled = true; };
+</script>
+{% endblock %}

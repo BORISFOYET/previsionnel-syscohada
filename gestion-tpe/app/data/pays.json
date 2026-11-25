@@ -1,0 +1,335 @@
+{
+ "_note": "Paramètres vérifiés le 25/11/2026. Champ « verification » : officiel = relu sur un site de l'État (DGI, ministère, Journal officiel) ; partiel = une partie seulement ; non officiel = sources secondaires, à confirmer. Taux de droit commun ; régimes particuliers non couverts. Vérifier à chaque loi de finances.",
+ "pays": {
+  "BJ": {
+   "nom": "Bénin",
+   "devise": "XOF",
+   "devise_libelle": "FCFA",
+   "is": 0.3,
+   "minimum_ca": 0.01,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.164,
+   "mois_solde_is": 4,
+   "source": "CGI Bénin 2025 (finances.bj) : IS 30 % art. 46-1-b ; minimum 1 % des produits encaissables, jamais moins de 250 000 FCFA, art. 47. TVA 18 % non relue dans le texte officiel",
+   "note_charges_sociales": "Estimation : CNSS pensions 6,4 % + prestations familiales 9 % + risques professionnels 1 % (taux minimal)",
+   "statut_charges_sociales": "estimation",
+   "minimum_plancher": 250000,
+   "verification": "officiel"
+  },
+  "BF": {
+   "nom": "Burkina Faso",
+   "devise": "XOF",
+   "devise_libelle": "FCFA",
+   "is": 0.275,
+   "minimum_ca": 0.005,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.16,
+   "mois_solde_is": 4,
+   "source": "CGI Burkina Faso (dgi.bf) : IS 27,5 % art. 87 ; minimum forfaitaire 0,5 % du CA HT, plancher 1 000 000 FCFA au réel normal (300 000 au RSI), art. 24 et 89 ; TVA 18 % art. 317",
+   "note_charges_sociales": "Estimation : CNSS pensions 5,5 % + famille 7 % + risques professionnels 3,5 %",
+   "statut_charges_sociales": "estimation",
+   "minimum_plancher": 1000000,
+   "verification": "officiel"
+  },
+  "CM": {
+   "nom": "Cameroun",
+   "devise": "XAF",
+   "devise_libelle": "FCFA",
+   "is": 0.275,
+   "minimum_ca": 0.022,
+   "tva": 0.1925,
+   "charges_sociales_employeur": 0.1545,
+   "mois_solde_is": 4,
+   "source": "DGI Cameroun (impots.cm, fiche IS) ; CGI art. 17 et 17 bis : 25 % + 10 % CAC = 27,5 % si CA ≤ 3 Md FCFA, 30 % + CAC = 33 % au-delà",
+   "note_charges_sociales": "Estimation : CNPS 12,95 % (pensions 4,2 %, famille 7 %, accidents 1,75 %) + Crédit foncier 1,5 % + FNE 1 %",
+   "statut_charges_sociales": "estimation",
+   "is_seuil_ca": 3000000000,
+   "is_majore": 0.33,
+   "verification": "officiel",
+   "synthetique": {
+    "nom": "Impôt général synthétique (IGS)",
+    "seuil_ca": 50000000,
+    "verification": "non officiel",
+    "source": "Barème IGS par tranche de CA HT (loi 2024/020, art. C 38 et suivants) selon lefisk.cm, mis à jour avril 2026 ; non relu sur un texte officiel",
+    "bareme": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      500001,
+      20000,
+      0
+     ],
+     [
+      1000001,
+      40000,
+      0
+     ],
+     [
+      2000001,
+      75000,
+      0
+     ],
+     [
+      3000001,
+      125000,
+      0
+     ],
+     [
+      5000001,
+      200000,
+      0
+     ],
+     [
+      7500001,
+      300000,
+      0
+     ],
+     [
+      10000001,
+      500000,
+      0
+     ],
+     [
+      15000001,
+      700000,
+      0
+     ],
+     [
+      20000001,
+      1000000,
+      0
+     ],
+     [
+      30000001,
+      1500000,
+      0
+     ],
+     [
+      40000001,
+      2000000,
+      0
+     ]
+    ]
+   }
+  },
+  "CF": {
+   "nom": "Centrafrique",
+   "devise": "XAF",
+   "devise_libelle": "FCFA",
+   "is": 0.3,
+   "minimum_ca": 0.01,
+   "tva": 0.19,
+   "charges_sociales_employeur": 0.19,
+   "mois_solde_is": 4,
+   "source": "Central Africa Tax Guide ; CGI RCA mis à jour 2023 (minimum absolu 1 850 000 FCFA)",
+   "note_charges_sociales": "Estimation à confirmer auprès de la CNSS",
+   "statut_charges_sociales": "estimation",
+   "verification": "non officiel"
+  },
+  "KM": {
+   "nom": "Comores",
+   "devise": "KMF",
+   "devise_libelle": "KMF",
+   "is": 0.35,
+   "minimum_ca": 0.0,
+   "tva": 0.1,
+   "charges_sociales_employeur": 0.1,
+   "mois_solde_is": 4,
+   "source": "PwC ; Code des impôts des Comores (taxe sur la consommation 10 %)",
+   "note_charges_sociales": "Estimation à confirmer auprès de la Caisse de prévoyance sociale",
+   "statut_charges_sociales": "estimation",
+   "verification": "non officiel"
+  },
+  "CG": {
+   "nom": "Congo",
+   "devise": "XAF",
+   "devise_libelle": "FCFA",
+   "is": 0.3,
+   "minimum_ca": 0.01,
+   "tva": 0.189,
+   "charges_sociales_employeur": 0.2028,
+   "mois_solde_is": 4,
+   "source": "Loi de finances 2025 (JO n° 15-2024, sgg.cg) : IS 30 % art. 122 CGI. Minimum de perception et TVA (18 % + 5 % de centimes) non relus dans un texte officiel",
+   "note_charges_sociales": "Estimation : CNSS pensions 8 % + famille 10,03 % + accidents 2,25 %",
+   "statut_charges_sociales": "estimation",
+   "verification": "partiel"
+  },
+  "CI": {
+   "nom": "Côte d'Ivoire",
+   "devise": "XOF",
+   "devise_libelle": "FCFA",
+   "is": 0.25,
+   "minimum_ca": 0.005,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.1545,
+   "mois_solde_is": 4,
+   "source": "DGI Côte d'Ivoire, « Impôts et taxes en Côte d'Ivoire » édition 2025 : IS 25 % art. 51 ; IMF 0,5 % du CA TTC, minimum 3 M, maximum 35 M FCFA, art. 39 ; TVA 18 %",
+   "note_charges_sociales": "CNPS : retraite 7,7 % + famille 5,75 % + accidents 2 % (PwC)",
+   "statut_charges_sociales": "source",
+   "minimum_plancher": 3000000,
+   "minimum_plafond": 35000000,
+   "verification": "officiel"
+  },
+  "CD": {
+   "nom": "RD Congo",
+   "devise": "CDF",
+   "devise_libelle": "CDF",
+   "is": 0.3,
+   "minimum_ca": 0.01,
+   "tva": 0.16,
+   "charges_sociales_employeur": 0.152,
+   "mois_solde_is": 4,
+   "source": "Réforme 2026 (lois 23/052 et 23/053) : l'IBP devient l'IS au 1er janvier 2026, taux 30 %, minimum 1 % du CA (sources : avocats.cd, DGI citée par heshimardc.net) ; IBP 30 % confirmé par le rapport officiel budget.gouv.cd. TVA 16 % à confirmer",
+   "note_charges_sociales": "Estimation : CNSS 13 % + INPP 2 % + ONEM 0,2 %",
+   "statut_charges_sociales": "estimation",
+   "verification": "partiel"
+  },
+  "GQ": {
+   "nom": "Guinée équatoriale",
+   "devise": "XAF",
+   "devise_libelle": "FCFA",
+   "is": 0.25,
+   "minimum_ca": 0.015,
+   "tva": 0.15,
+   "charges_sociales_employeur": 0.225,
+   "mois_solde_is": 4,
+   "source": "Ley General Tributaria 2025 (Ley 1/2024) selon la presse (aacapital.gq, guineainfomarket.com) : IS 25 % (au lieu de 35 %), cuota mínima 1,5 %, TVA 15 %. Texte officiel non consulté",
+   "note_charges_sociales": "INSESO 21,5 % + Fonds de protection du travail 1 % (PwC)",
+   "statut_charges_sociales": "source",
+   "verification": "non officiel"
+  },
+  "GA": {
+   "nom": "Gabon",
+   "devise": "XAF",
+   "devise_libelle": "FCFA",
+   "is": 0.3,
+   "minimum_ca": 0.01,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.201,
+   "mois_solde_is": 4,
+   "source": "DGI Gabon (dgi.ga, pages IS et TVA) : IS 30 % ; IMF 1 % du CA HT (art. 24 CGI), minimum de perception 1 000 000 FCFA ; TVA 18 %",
+   "note_charges_sociales": "CNSS et CNAMGS 20,1 % (PwC), avec plafonds",
+   "statut_charges_sociales": "source",
+   "minimum_plancher": 1000000,
+   "verification": "officiel"
+  },
+  "GN": {
+   "nom": "Guinée",
+   "devise": "GNF",
+   "devise_libelle": "GNF",
+   "is": 0.25,
+   "minimum_ca": 0.03,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.18,
+   "mois_solde_is": 4,
+   "source": "DGI Guinée, « Système fiscal guinéen » 31/03/2021 : IS 25 % art. 229 ; IMF 3 % du CA N-1, minimum 15 M, maximum 45 M GNF (PME), art. 244 ; TVA 18 % art. 373. À recouper avec la dernière loi de finances",
+   "note_charges_sociales": "Estimation : CNSS 18 %",
+   "statut_charges_sociales": "estimation",
+   "minimum_plancher": 15000000,
+   "minimum_plafond": 45000000,
+   "verification": "officiel"
+  },
+  "GW": {
+   "nom": "Guinée-Bissau",
+   "devise": "XOF",
+   "devise_libelle": "FCFA",
+   "is": 0.25,
+   "minimum_ca": 0.01,
+   "tva": 0.19,
+   "charges_sociales_employeur": 0.14,
+   "mois_solde_is": 4,
+   "source": "FMI, rapport pays 2025 (IS 25 %, TVA 19 %) ; minimum de perception à confirmer",
+   "note_charges_sociales": "Cotisations employeur 14 % (FMI 2025)",
+   "statut_charges_sociales": "source",
+   "verification": "non officiel"
+  },
+  "ML": {
+   "nom": "Mali",
+   "devise": "XOF",
+   "devise_libelle": "FCFA",
+   "is": 0.3,
+   "minimum_ca": 0.01,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.2,
+   "mois_solde_is": 4,
+   "source": "CGI Mali (IS 30 %, minimum 1 % du CA) : à confirmer sur la loi de finances 2026",
+   "note_charges_sociales": "Estimation : INPS (famille, accidents, retraite, AMO) environ 20 %",
+   "statut_charges_sociales": "estimation",
+   "verification": "non officiel",
+   "synthetique": {
+    "nom": "Impôt synthétique",
+    "seuil_ca": 50000000,
+    "verification": "officiel",
+    "source": "DGI Mali (dgi.gouv.ml, « Les impôts à payer ») : 3 % du CA annuel HT pour un CA inférieur à 50 000 000 FCFA",
+    "bareme": [
+     [
+      0,
+      0,
+      0.03
+     ]
+    ]
+   }
+  },
+  "NE": {
+   "nom": "Niger",
+   "devise": "XOF",
+   "devise_libelle": "FCFA",
+   "is": 0.3,
+   "minimum_ca": 0.01,
+   "tva": 0.19,
+   "charges_sociales_employeur": 0.164,
+   "mois_solde_is": 4,
+   "source": "CGI Niger : à confirmer sur la loi de finances 2026",
+   "note_charges_sociales": "Estimation : CNSS environ 16,4 %",
+   "statut_charges_sociales": "estimation",
+   "verification": "non officiel"
+  },
+  "SN": {
+   "nom": "Sénégal",
+   "devise": "XOF",
+   "devise_libelle": "FCFA",
+   "is": 0.3,
+   "minimum_ca": 0.005,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.2,
+   "mois_solde_is": 4,
+   "source": "PwC Worldwide Tax Summaries 2025 : IS 30 %, IMF 0,5 % du CA plafonné à 5 M FCFA. Le CGI 2025 de la DGID n'a pas pu être lu jusqu'aux articles concernés",
+   "note_charges_sociales": "Estimation moyenne : famille 7 %, accidents 1 à 5 %, IPRES 8,4 %, IPM, avec plafonds (PwC)",
+   "statut_charges_sociales": "estimation",
+   "verification": "non officiel",
+   "minimum_plafond": 5000000
+  },
+  "TD": {
+   "nom": "Tchad",
+   "devise": "XAF",
+   "devise_libelle": "FCFA",
+   "is": 0.35,
+   "minimum_ca": 0.015,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.165,
+   "mois_solde_is": 4,
+   "source": "PwC Worldwide Tax Summaries 2025 (minimum 1,5 % du CA)",
+   "note_charges_sociales": "CNPS : famille 7,5 % + accidents 4 % + vieillesse 5 %, base plafonnée à 500 000 FCFA (PwC)",
+   "statut_charges_sociales": "source",
+   "verification": "non officiel"
+  },
+  "TG": {
+   "nom": "Togo",
+   "devise": "XOF",
+   "devise_libelle": "FCFA",
+   "is": 0.27,
+   "minimum_ca": 0.01,
+   "tva": 0.18,
+   "charges_sociales_employeur": 0.175,
+   "mois_solde_is": 4,
+   "source": "Loi de finances 2024 (assemblee-nationale.tg) : minimum 1 % du CA HT, jamais moins de 20 000 FCFA, art. 120 CGI ; TVA 18 % art. 195. Taux d'IS 27 % non relu dans un texte officiel",
+   "note_charges_sociales": "CNSS 17,5 % (cnss.tg)",
+   "statut_charges_sociales": "source",
+   "minimum_plancher": 20000,
+   "verification": "partiel"
+  }
+ }
+}

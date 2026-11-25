@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block titre %}Historique{% endblock %}
+{% block contenu %}
+<h1>Historique des actions</h1>
+<p class="sous">Qui a fait quoi, et quand. Cet historique ne peut pas être modifié.</p>
+<div class="carte defile"><table class="tableau"><tr><th>Quand</th><th>Qui</th><th>Action</th><th>Détail</th></tr>
+{% for r in rows %}<tr><td>{{ r.quand.strftime('%d/%m/%Y %H:%M') if r.quand }}</td><td>{{ r.nom }}</td><td>{{ r.action.replace('_', ' ') }}</td><td>{{ r.detail }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

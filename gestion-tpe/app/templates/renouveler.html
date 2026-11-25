@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block titre %}Renouveler{% endblock %}
+{% block contenu %}
+<div class="connexion">
+  <h1>Renouveler mon abonnement</h1>
+  <p class="sous">Échéance actuelle : <strong>{{ soc.expire_le|d }}</strong>. Une nouvelle clé prolonge l'accès d'un an à partir de cette date. Vos données sont conservées.</p>
+  <form method="post" action="/renouveler" class="carte pile">
+    <div><label for="cle">Nouvelle clé de licence</label><input id="cle" name="cle" required autocomplete="off"></div>
+    <button class="bouton">Prolonger d'un an</button>
+    <p class="aide"><a href="{{ BOUTIQUE }}">Acheter un renouvellement</a> · <a href="/export/tout">Télécharger toutes mes données</a></p>
+  </form>
+</div>
+{% endblock %}

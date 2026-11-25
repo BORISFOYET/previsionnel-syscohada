@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block titre %}Stocks{% endblock %}
+{% block contenu %}
+<div class="titre-actions"><h1>Stocks</h1>{% if u.role == 'gerant' %}<a class="bouton secondaire" href="/stocks/inventaire">Faire un inventaire</a>{% endif %}</div>
+<div class="chiffres"><div class="chiffre"><small>Valeur du stock (coût moyen)</small><strong>{{ valeur|m }} {{ soc.devise_lib }}</strong></div>
+  <div class="chiffre"><small>Articles en alerte</small><strong>{{ articles|selectattr('stock', 'le', 0)|list|length }} à zéro</strong></div></div>
+{% if u.role == 'gerant' %}
+<form method="post" action="/stocks/entree" class="carte pile">
+  <h2>Entrée en stock (achat, réception)</h2>
+  <div class="grille">
+    <div><label for="article_id">Article</label><select id="article_id" name="article_id" required>{% for a in articles %}<option value="{{ a.id }}">{{ a.nom }}</option>{% endfor %}</select></div>
+    <div><label for="quantite">Quantité reçue</label><input id="quantite" name="quantite" inputmode="decimal" required></div>
+    <div><label for="cout">Coût d'achat unitaire HT</label><input id="cout" name="cout" inputmode="numeric" required></div>
+    <div><label for="fournisseur">Fournisseur</label><input id="fournisseur" name="fournisseur"></div>
+    <div><label for="paiement">Payé maintenant ?</label><select id="paiement" name="paiement"><option value="">Non (à crédit ou déjà payé)</option>{% for k, v in MODES.items() %}<option value="{{ k }}">Oui, en {{ v }}</option>{% endfor %}</select></div>
+  </div>
+  <button class="bouton">Enregistrer l'entrée</button>
+</form>
+{% endif %}
+<div class="carte defile"><table class="tableau">
+  <tr><th>Article</th><th class="n">Stock</th><th class="n">Seuil</th><th class="n">Coût moyen</th><th class="n">Valeur</th></tr>
+  {% for a in articles %}<tr class="{{ 'bas' if a.stock <= a.seuil_alerte }}"><td>{{ a.nom }}</td><td class="n">{{ a.stock|q }} {{ a.unite }}</td><td class="n">{{ a.seuil_alerte|q }}</td><td class="n">{{ a.cump|m }}</td><td class="n">{{ (a.stock * a.cump)|m }}</td></tr>
+  {% else %}<tr><td colspan="5" class="vide">Aucun produit suivi en stock.</td></tr>{% endfor %}
+</table></div>
+<div class="carte defile"><h2>Derniers mouvements</h2><table class="tableau">
+  <tr><th>Date</th><th>Article</th><th>Type</th><th class="n">Quantité</th><th>Libellé</th></tr>
+  {% for m in mvts %}<tr><td>{{ m.date|d }}</td><td>{{ m.nom }}</td><td>{{ {'entree': 'Entrée', 'sortie': 'Vente', 'inventaire': 'Inventaire', 'retour': 'Retour (avoir)'}[m.type] }}</td><td class="n">{{ m.quantite|q }}</td><td>{{ m.libelle }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

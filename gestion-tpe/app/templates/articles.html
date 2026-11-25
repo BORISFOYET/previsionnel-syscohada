@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block titre %}Articles{% endblock %}
+{% block contenu %}
+<h1>Articles et services</h1>
+{% if u.role == 'gerant' %}
+<details class="carte" {{ 'open' if not articles }}>
+  <summary><span class="num">+</span><h2>Nouvel article</h2></summary>
+  <form method="post" action="/articles" class="pile">
+    <div class="grille">
+      <div><label for="nom">Nom</label><input id="nom" name="nom" required></div>
+      <div><label for="type">Type</label><select id="type" name="type"><option value="produit">Produit (suivi en stock)</option><option value="service">Service</option></select></div>
+      <div><label for="reference">Référence</label><input id="reference" name="reference"></div>
+      <div><label for="unite">Unité</label><input id="unite" name="unite" value="unité"></div>
+      <div><label for="prix_vente">Prix de vente HT ({{ soc.devise_lib }})</label><input id="prix_vente" name="prix_vente" inputmode="numeric" required></div>
+      <div><label for="tva">TVA (%)</label><input id="tva" name="tva" inputmode="decimal" value="{{ (tva_pays * 100)|q if soc.assujetti_tva else 0 }}"></div>
+      <div><label for="stock_initial">Stock d'ouverture</label><input id="stock_initial" name="stock_initial" inputmode="decimal" value="0"></div>
+      <div><label for="prix_achat">Coût d'achat unitaire HT</label><input id="prix_achat" name="prix_achat" inputmode="numeric" value="0"></div>
+      <div><label for="seuil_alerte">Alerte si stock ≤</label><input id="seuil_alerte" name="seuil_alerte" inputmode="decimal" value="0"></div>
+    </div>
+    <button class="bouton">Enregistrer</button>
+  </form>
+</details>
+{% endif %}
+<div class="carte defile"><table class="tableau">
+  <tr><th>Article</th><th class="n">Prix HT</th><th class="n">TVA</th><th class="n">Stock</th><th class="n">Coût moyen</th>{% if u.role == 'gerant' %}<th></th>{% endif %}</tr>
+  {% for a in articles %}<tr class="{{ 'bas' if a.type == 'produit' and a.stock <= a.seuil_alerte }}">
+    <td>{{ a.nom }}<small>{{ a.reference }} · {{ 'Service' if a.type == 'service' else a.unite }}</small></td>
+    <td class="n">{{ a.prix_vente|m }}</td><td class="n">{{ a.tva|pct }}</td>
+    <td class="n">{{ a.stock|q if a.type == 'produit' else '—' }}</td><td class="n">{{ a.cump|m if a.type == 'produit' else '—' }}</td>
+    {% if u.role == 'gerant' %}<td><details><summary class="lien">Modifier</summary>
+      <form method="post" action="/articles" class="pile mini"><input type="hidden" name="id" value="{{ a.id }}"><input type="hidden" name="type" value="{{ a.type }}">
+        <input name="nom" value="{{ a.nom }}" aria-label="Nom"><input name="reference" value="{{ a.reference }}" aria-label="Référence" placeholder="Référence">
+        <input name="unite" value="{{ a.unite }}" aria-label="Unité"><input name="prix_vente" value="{{ a.prix_vente }}" aria-label="Prix HT">
+        <input name="tva" value="{{ (a.tva * 100)|q }}" aria-label="TVA %"><input name="seuil_alerte" value="{{ a.seuil_alerte|q }}" aria-label="Seuil d'alerte">
+        <button class="ajout">Enregistrer</button></form>
+      <form method="post" action="/articles/{{ a.id }}/archiver"><button class="lien">Retirer du catalogue</button></form></details></td>{% endif %}
+  </tr>{% else %}<tr><td colspan="6" class="vide">Ajoutez vos premiers articles pour commencer à vendre.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

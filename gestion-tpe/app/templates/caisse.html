@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block titre %}Caisse{% endblock %}
+{% block contenu %}
+<h1>Caisse du {{ jour|d }}</h1>
+<div class="chiffres">
+  {% for k, v in MODES.items() %}<div class="chiffre"><small>Solde {{ v }}</small><strong>{{ soldes[k]|m }}</strong></div>{% endfor %}
+</div>
+<div class="deux">
+  <form method="post" action="/caisse/mouvement" class="carte pile">
+    <h2>Entrée ou sortie d'argent</h2>
+    <p class="aide">Les ventes et règlements de factures s'enregistrent tout seuls. Ici : dépenses, apports, autres recettes.</p>
+    <div class="modes"><label class="choix"><input type="radio" name="sens" value="depense" checked> Dépense</label>{% if u.role == 'gerant' %}<label class="choix"><input type="radio" name="sens" value="recette"> Recette</label>{% endif %}</div>
+    <div class="grille">
+      <div><label for="categorie">Rubrique</label><select id="categorie" name="categorie">
+        <optgroup label="Dépenses" data-sens="depense">{% for k, v in cat_d.items() if k != 'ecart_caisse' %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</optgroup>
+        {% if u.role == 'gerant' %}<optgroup label="Recettes" data-sens="recette" disabled>{% for k, v in cat_r.items() if k not in ('ecart_caisse',) %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</optgroup>{% endif %}
+      </select></div>
+      <div><label for="libelle">Libellé</label><input id="libelle" name="libelle" placeholder="Ex. : carburant livraison"></div>
+      <div><label for="tiers">Fournisseur / tiers</label><input id="tiers" name="tiers"></div>
+      <div><label for="montant">Montant TTC</label><input id="montant" name="montant" inputmode="numeric" required></div>
+      <div><label for="tva">dont TVA (si facture du fournisseur)</label><input id="tva" name="tva" inputmode="numeric" value="0"></div>
+      <div><label for="mode">Mode</label><select id="mode" name="mode">{% for k, v in MODES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+      {% if u.role == 'gerant' %}<div><label for="date">Date</label><input id="date" name="date" type="date" value="{{ aujourdhui }}" max="{{ aujourdhui }}"></div>{% endif %}
+    </div>
+    <button class="bouton">Enregistrer</button>
+  </form>
+  <form method="post" action="/caisse/cloture" class="carte pile">
+    <h2>Clôture de la caisse du jour</h2>
+    {% if cloture_jour %}<p class="succes">La caisse de ce jour est clôturée.</p>
+    {% else %}
+    <p>Espèces attendues en caisse : <strong>{{ theorique|m }} {{ soc.devise_lib }}</strong></p>
+    <div><label for="compte">Espèces comptées</label><input id="compte" name="compte" inputmode="numeric" required></div>
+    <div><label for="note">Commentaire</label><input id="note" name="note"></div>
+    <button class="bouton" onclick="return confirm('Clôturer la caisse ? Les mouvements en espèces du jour seront figés.')">Clôturer</button>
+    {% endif %}
+  </form>
+</div>
+<div class="carte defile">
+  <h2>Mouvements du jour</h2>
+  <table class="tableau"><tr><th>Pièce</th><th>Libellé</th><th>Mode</th><th class="n">Entrée</th><th class="n">Sortie</th><th>Par</th></tr>
+  {% for m in mvts %}<tr><td>{{ m.numero }}</td><td>{{ m.libelle }}</td><td>{{ MODES[m.mode] }}</td><td class="n">{{ m.montant|m if m.sens == 'recette' }}</td><td class="n">{{ m.montant|m if m.sens == 'depense' }}</td><td>{{ m.par }}</td></tr>
+  {% else %}<tr><td colspan="6" class="vide">Aucun mouvement ce jour.</td></tr>{% endfor %}</table>
+</div>
+<div class="carte defile">
+  <h2>Dernières clôtures</h2>
+  <table class="tableau"><tr><th>Date</th><th class="n">Attendu</th><th class="n">Compté</th><th class="n">Écart</th><th>Par</th></tr>
+  {% for c in clotures %}<tr class="{{ 'bas' if c.ecart < 0 }}"><td>{{ c.date|d }}</td><td class="n">{{ c.solde_theorique|m }}</td><td class="n">{{ c.solde_compte|m }}</td><td class="n">{{ c.ecart|m }}</td><td>{{ c.nom }}</td></tr>
+  {% else %}<tr><td colspan="5" class="vide">Aucune clôture.</td></tr>{% endfor %}</table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('input[name=sens]').forEach(r => r.onchange = () => {
+  const s = document.querySelector('input[name=sens]:checked').value, sel = document.getElementById('categorie');
+  sel.querySelectorAll('optgroup').forEach(g => g.disabled = g.dataset.sens !== s);
+  sel.value = sel.querySelector(`optgroup[data-sens=${s}] option`).value;
+});
+</script>
+{% endblock %}

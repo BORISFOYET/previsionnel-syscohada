@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block titre %}Activer ma clé{% endblock %}
+{% block contenu %}
+<div class="connexion large">
+  <h1>Créer l'espace de ma société</h1>
+  <p class="sous">La clé est liée à une seule société. Vous vous connecterez ensuite avec votre identifiant et votre mot de passe.</p>
+  <form method="post" action="/activer" class="carte pile">
+    <div><label for="cle">Clé de licence</label><input id="cle" name="cle" value="{{ f.cle or '' }}" required autocomplete="off">
+      {% if demo %}<p class="aide">Mode démonstration : saisissez par exemple DEMO-1234.</p>{% endif %}</div>
+    <div class="grille">
+      <div><label for="raison_sociale">Raison sociale</label><input id="raison_sociale" name="raison_sociale" value="{{ f.raison_sociale or '' }}" required></div>
+      <div><label for="forme">Forme juridique</label><select id="forme" name="forme">{% for x in formes %}<option {{ 'selected' if f.forme == x }}>{{ x }}</option>{% endfor %}</select></div>
+      <div><label for="pays">Pays</label><select id="pays" name="pays" required><option value="">Choisir…</option>{% for p in pays %}<option value="{{ p.code }}" {{ 'selected' if f.pays == p.code }}>{{ p.nom }}</option>{% endfor %}</select></div>
+      <div><label for="telephone">Téléphone</label><input id="telephone" name="telephone" value="{{ f.telephone or '' }}" inputmode="tel"></div>
+    </div>
+    <h3>Compte du gérant</h3>
+    <div class="grille">
+      <div><label for="nom">Votre nom</label><input id="nom" name="nom" value="{{ f.nom or '' }}" required></div>
+      <div><label for="identifiant">Identifiant (e-mail ou numéro WhatsApp)</label><input id="identifiant" name="identifiant" value="{{ f.identifiant or '' }}" required autocapitalize="none" autocomplete="username"></div>
+      <div><label for="mot_de_passe">Mot de passe (8 caractères minimum)</label><input id="mot_de_passe" name="mot_de_passe" type="password" minlength="8" required autocomplete="new-password"></div>
+      <div><label for="confirmation">Confirmer le mot de passe</label><input id="confirmation" name="confirmation" type="password" minlength="8" required autocomplete="new-password"></div>
+    </div>
+    <button class="bouton">Créer mon espace</button>
+  </form>
+</div>
+{% endblock %}

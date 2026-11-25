@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block titre %}Tableau de bord{% endblock %}
+{% block contenu %}
+<div class="titre-actions"><h1>Tableau de bord</h1>
+  <form method="get" class="filtres"><input type="month" name="mois" value="{{ tb.mois }}" aria-label="Mois" onchange="this.form.submit()"></form></div>
+{% if vide %}
+<div class="carte"><h2>Bienvenue ! Trois étapes pour démarrer</h2><ol>
+  <li><a href="/societe">Complétez votre société</a> : logo, couleurs, RCCM, NIU.</li>
+  <li><a href="/articles">Créez vos articles</a> avec leur prix et votre stock d'ouverture.</li>
+  <li><a href="/equipe">Ajoutez vos employés</a>, puis faites votre première <a href="/vente">vente</a>.</li></ol></div>
+{% endif %}
+<div class="chiffres">
+  <div class="chiffre"><small>Chiffre d'affaires HT</small><strong>{{ tb.ca_ht|m }}</strong></div>
+  <div class="chiffre"><small>Marge sur ventes</small><strong>{{ tb.marge|m }}</strong></div>
+  <div class="chiffre"><small>Encaissé</small><strong>{{ tb.recettes|m }}</strong></div>
+  <div class="chiffre"><small>Dépensé</small><strong>{{ tb.depenses|m }}</strong></div>
+  <div class="chiffre"><small>Impayés clients</small><strong>{{ tb.total_impayes|m }}</strong></div>
+  <div class="chiffre"><small>TVA à reverser (estim.)</small><strong>{{ tb.tva.a_reverser|m }}</strong></div>
+  {% for k, v in MODES.items() %}<div class="chiffre"><small>Solde {{ v }}</small><strong>{{ tb.soldes[k]|m }}</strong></div>{% endfor %}
+  <div class="chiffre"><small>Valeur du stock</small><strong>{{ tb.valeur_stock|m }}</strong></div>
+</div>
+<p class="aide">Montants en {{ soc.devise_lib }}, du {{ tb.debut|d }} au {{ tb.fin|d }}.</p>
+<div class="deux">
+  <div class="carte"><h2>À surveiller</h2>
+    {% if tb.ecarts %}<h3>Écarts de caisse</h3><ul>{% for e in tb.ecarts %}<li class="{{ 'neg' if e.ecart < 0 }}">{{ e.date|d }} · {{ e.nom }} : {{ e.ecart|m }}</li>{% endfor %}</ul>{% endif %}
+    {% if tb.alertes %}<h3>Stock bas</h3><ul>{% for a in tb.alertes %}<li>{{ a.nom }} : {{ a.stock|q }} {{ a.unite }}</li>{% endfor %}</ul>{% endif %}
+    {% if tb.impayes %}<h3>Factures impayées</h3><ul>{% for i in tb.impayes[:8] %}<li><a href="/documents/{{ i.id }}">{{ i.numero }}</a> · {{ i.client_nom }} : {{ i.reste|m }}{% if i.echeance and i.echeance < aujourdhui %} <span class="neg">(en retard)</span>{% endif %}</li>{% endfor %}</ul>{% endif %}
+    {% if not (tb.ecarts or tb.alertes or tb.impayes) %}<p class="succes">Rien à signaler.</p>{% endif %}
+  </div>
+  <div class="carte"><h2>Ventes par vendeur</h2>
+    <table class="tableau"><tr><th>Vendeur</th><th class="n">Ventes</th><th class="n">Montant TTC</th></tr>
+    {% for v in tb.par_vendeur %}<tr><td>{{ v.nom }}</td><td class="n">{{ v.nb }}</td><td class="n">{{ v.total|m }}</td></tr>{% else %}<tr><td colspan="3" class="vide">Aucune vente.</td></tr>{% endfor %}</table>
+  </div>
+</div>
+<div class="carte defile"><h2>Marge par article</h2>
+  <table class="tableau"><tr><th>Article</th><th class="n">Quantité</th><th class="n">CA HT</th><th class="n">Coût</th><th class="n">Marge</th><th class="n">Taux</th></tr>
+  {% for a in marges %}<tr><td>{{ a.designation }}</td><td class="n">{{ a.quantite|q }}</td><td class="n">{{ a.ca|m }}</td><td class="n">{{ a.cout|m }}</td><td class="n">{{ a.marge|m }}</td><td class="n">{{ '%.0f'|format(a.taux * 100) }} %</td></tr>
+  {% else %}<tr><td colspan="6" class="vide">Aucune vente ce mois-ci.</td></tr>{% endfor %}</table>
+</div>
+{% endblock %}

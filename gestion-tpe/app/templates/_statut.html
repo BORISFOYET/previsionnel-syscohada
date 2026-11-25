@@ -1,0 +1,3 @@
+{%- set s = d.statut -%}
+{%- if d.type == 'facture' and s == 'valide' -%}{%- if d.paye >= d.total_ttc -%}<span class="pastille ok">Payée</span>{%- elif d.paye > 0 -%}<span class="pastille partiel">Partiel</span>{%- else -%}<span class="pastille attente">À encaisser</span>{%- endif -%}
+{%- else -%}<span class="pastille {{ s }}">{{ {'brouillon': 'En attente' if d.type == 'devis' else 'Brouillon', 'accepte': 'Accepté', 'refuse': 'Refusé', 'converti': 'Facturé', 'annule': 'Annulée', 'valide': 'Validé'}[s] }}</span>{%- endif -%}
