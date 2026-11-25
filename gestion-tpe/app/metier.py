@@ -539,3 +539,85 @@ def tableau_de_bord(cx, sid, mois):
             'alertes': [dict(a) for a in alertes], 'ecarts': [dict(e) for e in ecarts],
             'par_vendeur': [{'nom': n, 'nb': c, 'total': int(t or 0)} for n, c, t in par_vendeur],
             'cout_ventes': cv, 'marge': tva['ca_ht'] - cv, 'valeur_stock': round(valeur_stock or 0)}
+
+
+# ---------------------------------------------------------------- données des graphiques
+JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+
+
+def _somme(cx, sid, sens, debut, fin):
+    return int(cx.execute(select(func.coalesce(func.sum(tresorerie.c.montant), 0)).where(
+        tresorerie.c.societe_id == sid, tresorerie.c.sens == sens, tresorerie.c.annule.is_(False),
+        tresorerie.c.categorie != 'ecart_caisse', tresorerie.c.date.between(debut, fin))).scalar())
+
+
+def serie_jours(cx, sid, fin, n=7):
+    """Recettes et dépenses des n derniers jours jusqu'à `fin` inclus."""
+    debut = fin - timedelta(days=n - 1)
+    rows = cx.execute(select(tresorerie.c.date, tresorerie.c.sens, func.sum(tresorerie.c.montant))
+                      .where(tresorerie.c.societe_id == sid, tresorerie.c.annule.is_(False),
+                             tresorerie.c.categorie != 'ecart_caisse', tresorerie.c.date.between(debut, fin))
+                      .group_by(tresorerie.c.date, tresorerie.c.sens)).all()
+    par = {}
+    for d, sens, t in rows:
+        par[(d if isinstance(d, date) else date.fromisoformat(str(d)), sens)] = int(t or 0)
+    out = []
+    for i in range(n):
+        d = debut + timedelta(days=i)
+        out.append({'date': d, 'jour': JOURS[d.weekday()], 'recettes': par.get((d, 'recette'), 0),
+                    'depenses': par.get((d, 'depense'), 0)})
+    return out
+
+
+def depenses_par_rubrique(cx, sid, debut, fin):
+    rows = cx.execute(select(tresorerie.c.categorie, func.sum(tresorerie.c.montant))
+                      .where(tresorerie.c.societe_id == sid, tresorerie.c.sens == 'depense',
+                             tresorerie.c.annule.is_(False), tresorerie.c.date.between(debut, fin))
+                      .group_by(tresorerie.c.categorie)).all()
+    total = sum(int(t or 0) for _, t in rows)
+    out = sorted(({'categorie': CATEGORIES_DEPENSES.get(c, c), 'montant': int(t or 0)} for c, t in rows),
+                 key=lambda x: -x['montant'])
+    if len(out) > 5:  # 5 premières rubriques + « Autres »
+        out = out[:5] + [{'categorie': 'Autres', 'montant': sum(x['montant'] for x in out[5:])}]
+    for x in out:
+        x['part'] = x['montant'] / total if total else 0
+    return out, total
+
+
+def derniers_mouvements(cx, sid, n=7):
+    return [dict(r) for r in cx.execute(
+        select(tresorerie.c.id, tresorerie.c.date, tresorerie.c.sens, tresorerie.c.mode, tresorerie.c.libelle,
+               tresorerie.c.tiers, tresorerie.c.montant, tresorerie.c.categorie)
+        .where(tresorerie.c.societe_id == sid, tresorerie.c.annule.is_(False))
+        .order_by(tresorerie.c.date.desc(), tresorerie.c.numero.desc()).limit(n)).mappings()]
+
+
+def variation(actuel, precedent):
+    """Variation relative, ou None s'il n'y a pas de base de comparaison."""
+    return (actuel - precedent) / precedent if precedent else None
+
+
+def complements_tableau(cx, sid, tb):
+    """Ajoute au tableau de bord : série 7 jours, comparaison au mois précédent, rubriques, jauge d'encaissement."""
+    debut, fin = tb['debut'], tb['fin']
+    jour_ref = min(fin, date.today())
+    tb['serie'] = serie_jours(cx, sid, jour_ref)
+    tb['max_serie'] = max([1] + [max(j['recettes'], j['depenses']) for j in tb['serie']])
+    p_fin = debut - timedelta(days=1)
+    p_debut = p_fin.replace(day=1)
+    ca_prec = tva_periode(cx, sid, p_debut, p_fin)['ca_ht']
+    tb['var'] = {'ca': variation(tb['ca_ht'], ca_prec),
+                 'recettes': variation(tb['recettes'], _somme(cx, sid, 'recette', p_debut, p_fin)),
+                 'depenses': variation(tb['depenses'], _somme(cx, sid, 'depense', p_debut, p_fin))}
+    tb['rubriques'], tb['total_depenses_rub'] = depenses_par_rubrique(cx, sid, debut, fin)
+    tb['mouvements'] = derniers_mouvements(cx, sid)
+    facture_ttc = int(cx.execute(select(func.coalesce(func.sum(documents.c.total_ttc), 0)).where(
+        documents.c.societe_id == sid, documents.c.type == 'facture', documents.c.statut == 'valide',
+        documents.c.date.between(debut, fin))).scalar())
+    paye = int(cx.execute(select(func.coalesce(func.sum(documents.c.paye), 0)).where(
+        documents.c.societe_id == sid, documents.c.type == 'facture', documents.c.statut == 'valide',
+        documents.c.date.between(debut, fin))).scalar())
+    tb['taux_encaissement'] = paye / facture_ttc if facture_ttc else None
+    tb['facture_ttc'] = facture_ttc
+    tb['taux_marge'] = tb['marge'] / tb['ca_ht'] if tb['ca_ht'] else None
+    return tb

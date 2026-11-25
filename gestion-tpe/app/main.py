@@ -74,7 +74,20 @@ def contexte(request, gerant=False):
     return dict(u), soc
 
 
+def _badges(sid):
+    with db.moteur().connect() as cx:
+        impayes = cx.execute(select(func.count()).where(
+            db.documents.c.societe_id == sid, db.documents.c.type == 'facture', db.documents.c.statut == 'valide',
+            db.documents.c.total_ttc > db.documents.c.paye)).scalar()
+        alertes = cx.execute(select(func.count()).where(
+            db.articles.c.societe_id == sid, db.articles.c.actif.is_(True), db.articles.c.type == 'produit',
+            db.articles.c.stock <= db.articles.c.seuil_alerte)).scalar()
+    return {'impayes': impayes, 'alertes': alertes}
+
+
 def page(request, nom, u=None, soc=None, **kw):
+    if soc:
+        kw['nav_badges'] = _badges(soc['id'])
     kw.update(u=u, soc=soc, ok=request.query_params.get('ok', ''), erreur=kw.get('erreur') or request.query_params.get('erreur', ''),
               chemin=request.url.path, aujourdhui=date.today())
     return tpl.TemplateResponse(request, nom, kw, status_code=kw.pop('code_http', 200))
@@ -777,7 +790,7 @@ def tableau(request: Request, mois: str = ''):
         return RedirectResponse('/vente', 303)
     mois = _mois(mois)
     with db.moteur().connect() as cx:
-        tb = metier.tableau_de_bord(cx, soc['id'], mois)
+        tb = metier.complements_tableau(cx, soc['id'], metier.tableau_de_bord(cx, soc['id'], mois))
         marges = metier.marges_articles(cx, soc['id'], tb['debut'], tb['fin'])[:10]
         vide = not cx.execute(select(db.articles.c.id).where(db.articles.c.societe_id == soc['id'])).first()
     return page(request, 'tableau.html', u, soc, tb=tb, marges=marges, vide=vide)
@@ -791,3 +804,25 @@ def historique(request: Request):
             db.journal.outerjoin(db.utilisateurs, db.utilisateurs.c.id == db.journal.c.utilisateur_id))
             .where(db.journal.c.societe_id == soc['id']).order_by(db.journal.c.id.desc()).limit(300)).mappings().all()
     return page(request, 'historique.html', u, soc, rows=rows)
+
+
+# ------------------------------------------------------------------ recherche
+@app.get('/recherche', response_class=HTMLResponse)
+def recherche(request: Request, q: str = ''):
+    u, soc = contexte(request)
+    q = q.strip()[:80]
+    res = {'documents': [], 'clients': [], 'articles': []}
+    if len(q) >= 2:
+        motif = f'%{q.lower()}%'
+        with db.moteur().connect() as cx:
+            res['documents'] = cx.execute(select(db.documents).where(
+                db.documents.c.societe_id == soc['id'],
+                func.lower(func.coalesce(db.documents.c.numero, '')).like(motif) | func.lower(db.documents.c.client_nom).like(motif))
+                .order_by(db.documents.c.date.desc()).limit(20)).mappings().all()
+            res['clients'] = cx.execute(select(db.clients).where(
+                db.clients.c.societe_id == soc['id'], db.clients.c.actif.is_(True),
+                func.lower(db.clients.c.nom).like(motif) | db.clients.c.telephone.like(motif)).limit(20)).mappings().all()
+            res['articles'] = cx.execute(select(db.articles).where(
+                db.articles.c.societe_id == soc['id'], db.articles.c.actif.is_(True),
+                func.lower(db.articles.c.nom).like(motif) | func.lower(db.articles.c.reference).like(motif)).limit(20)).mappings().all()
+    return page(request, 'recherche.html', u, soc, q=q, res=res)

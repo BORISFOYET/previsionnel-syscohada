@@ -14,7 +14,7 @@
   <form method="post" action="/vente" class="carte panier" id="panier">
     <h2>Panier</h2>
     <div id="lignes" class="lignes-panier"><p class="vide">Panier vide.</p></div>
-    <div class="total-panier">Total : <strong id="total">0</strong> {{ soc.devise_lib }}</div>
+    <div class="total-panier"><span>Total</span><span><strong id="total">0</strong> {{ soc.devise_lib }}</span></div>
     <label for="mode">Paiement</label>
     <div class="modes">{% for k, v in MODES.items() %}<label class="choix"><input type="radio" name="mode" value="{{ k }}" {{ 'checked' if loop.first }}> {{ v }}</label>{% endfor %}</div>
     <button class="bouton" id="valider" disabled>Encaisser la vente</button>

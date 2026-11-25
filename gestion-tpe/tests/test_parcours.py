@@ -116,7 +116,7 @@ def test_parcours_complet(base):
 
     # tableau de bord et livres
     r = c.get('/tableau')
-    assert r.status_code == 200 and 'Écarts de caisse' in r.text
+    assert r.status_code == 200 and 'Écart de caisse' in r.text
     r = c.get(f'/livres/export?periode={date.today():%Y-%m}')
     wb = openpyxl.load_workbook(io.BytesIO(r.content))
     assert {'Livre des recettes', 'Livre des dépenses', 'Récapitulatif', 'TVA'} <= set(wb.sheetnames)
@@ -125,7 +125,7 @@ def test_parcours_complet(base):
     r = c.get('/export/tout')
     assert 'Historique' in openpyxl.load_workbook(io.BytesIO(r.content)).sheetnames
     for p in ['/vente', '/caisse', '/stocks', '/livres', '/clients', '/articles', '/societe', '/equipe',
-              '/historique', '/documents?type=devis', '/documents?type=facture', '/documents?type=avoir',
+              '/historique', '/recherche?q=hot', '/documents?type=devis', '/documents?type=facture', '/documents?type=avoir',
               f'/documents/{devis_id}', '/stocks/inventaire', '/renouveler']:
         assert c.get(p).status_code == 200, p
 

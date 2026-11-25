@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block titre %}Recherche{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Recherche</h1><p class="sous">{% if q|length < 2 %}Saisissez au moins 2 caractères.{% else %}Résultats pour « {{ q }} »{% endif %}</p></div></div>
+{% if q|length >= 2 %}
+<div class="deux">
+  <section class="carte"><h2>Devis et factures</h2>
+    <ul class="liste">{% for d in res.documents %}<li><a href="/documents/{{ d.id }}"><strong>{{ d.numero or 'Brouillon' }}</strong><small>{{ d.client_nom }} · {{ d.date|d }}</small></a><span class="montant">{{ d.total_ttc|m }}</span></li>
+    {% else %}<li class="vide">Aucun document.</li>{% endfor %}</ul></section>
+  <section class="carte"><h2>Clients et articles</h2>
+    <ul class="liste">{% for c in res.clients %}<li><a href="/clients"><strong>{{ c.nom }}</strong><small>Client · {{ c.telephone }}</small></a></li>{% endfor %}
+    {% for a in res.articles %}<li><a href="/articles"><strong>{{ a.nom }}</strong><small>Article · stock {{ a.stock|q }}</small></a><span class="montant">{{ a.prix_vente|m }}</span></li>{% endfor %}
+    {% if not res.clients and not res.articles %}<li class="vide">Aucun client ni article.</li>{% endif %}</ul></section>
+</div>
+{% endif %}
+{% endblock %}

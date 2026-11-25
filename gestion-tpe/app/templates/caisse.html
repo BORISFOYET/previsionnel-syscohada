@@ -2,8 +2,8 @@
 {% block titre %}Caisse{% endblock %}
 {% block contenu %}
 <h1>Caisse du {{ jour|d }}</h1>
-<div class="chiffres">
-  {% for k, v in MODES.items() %}<div class="chiffre"><small>Solde {{ v }}</small><strong>{{ soldes[k]|m }}</strong></div>{% endfor %}
+<div class="comptes trois">
+  {% for k, v in MODES.items() %}<div class="compte {{ k }}"><small>Solde {{ v }}</small><strong>{{ soldes[k]|m }} {{ soc.devise_lib }}</strong></div>{% endfor %}
 </div>
 <div class="deux">
   <form method="post" action="/caisse/mouvement" class="carte pile">
@@ -24,7 +24,7 @@
     </div>
     <button class="bouton">Enregistrer</button>
   </form>
-  <form method="post" action="/caisse/cloture" class="carte pile">
+  <form method="post" action="/caisse/cloture" class="carte pile" id="cloture">
     <h2>Clôture de la caisse du jour</h2>
     {% if cloture_jour %}<p class="succes">La caisse de ce jour est clôturée.</p>
     {% else %}
