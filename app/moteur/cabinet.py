@@ -491,6 +491,9 @@ def remplir(cfg, ctx):
     # --- page de garde
     _ecrire(PL, 'B14', f'Etude financière \nprévisionnelle sur {ny} ans')
     _ecrire(PL, 'C23', porteur); _ecrire(PL, 'C28', soc)
+    if theme.get('primaire'):  # nom de la société à la couleur principale du client
+        from copy import copy as _cp
+        ft = _cp(PL['C28'].font); ft.color = theme['primaire'].lstrip('#').upper(); PL['C28'].font = ft
     _ecrire(PL, 'C33', contact.get('forme_juridique') or cfg['pays']['nom'])
     _ecrire(PL, 'C42', contact.get('telephone', '')); _ecrire(PL, 'C43', contact.get('email', ''))
     _ecrire(PL, 'C44', ', '.join(x for x in (contact.get('ville', ''), cfg['pays']['nom']) if x))
@@ -499,8 +502,10 @@ def remplir(cfg, ctx):
     if theme.get('logo'):
         try:
             from openpyxl.drawing.image import Image as XLImage
-            img = XLImage(theme['logo']); ratio = 60 / img.height; img.height = 60; img.width = int(img.width * ratio)
-            PL.add_image(img, 'C37')
+            img = XLImage(theme['logo']); ratio = 64 / img.height; img.height = 64; img.width = int(img.width * ratio)
+            if img.width > 150:  # logo très large : on le limite à la largeur de la colonne de gauche du cadre
+                img.height = int(img.height * 150 / img.width); img.width = 150
+            PL.add_image(img, 'B3')
         except Exception:
             pass
 

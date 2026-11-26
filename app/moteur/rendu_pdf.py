@@ -330,7 +330,11 @@ class Rendu:
                     data = img._data()
                     import io
                     ir = ImageReader(io.BytesIO(data))
-                    w_, h_ = img.width * 0.75 * s, img.height * 0.75 * s
+                    wpx, hpx = img.width, img.height
+                    ext = getattr(img.anchor, 'ext', None)
+                    if ext is not None and getattr(ext, 'width', 0):  # taille affichée dans le classeur (EMU), pas la taille d'origine du fichier
+                        wpx, hpx = ext.width / 9525, ext.height / 9525
+                    w_, h_ = wpx * 0.75 * s, hpx * 0.75 * s
                     cv.drawImage(ir, xs[c], ys[r] - h_, w_, h_, mask='auto')
             except Exception:
                 pass
