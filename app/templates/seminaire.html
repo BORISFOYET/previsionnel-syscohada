@@ -1,300 +1,177 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Séminaires business plan · Account's</title>
-<meta name="description" content="4 séminaires pour construire votre business plan et votre prévisionnel, sur votre propre projet. Dès le {{ s.debut }}. {{ s.places }} places.">
-<meta property="og:title" content="Repartez avec un dossier prêt pour la banque">
+<meta name="description" content="4 séminaires pour construire votre business plan et votre prévisionnel, sur votre propre projet. Dès le {{ s.debut }}. {{ s.places }} places, sur candidature.">
+<meta property="og:title" content="Repartez avec un dossier prêt pour la banque · Account's">
 <meta property="og:description" content="4 séminaires business plan avec Rodney Fotsing, dès le {{ s.debut }}. {{ s.places }} places, sur candidature.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script>
-!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init','{{ pixel }}');fbq('track','PageView');fbq('track','ViewContent',{content_name:'Séminaires business plan'});
-</script>
-<style>
-:root{--v:#331C77;--nuit:#1F0F52;--rose:#FF2FED;--bleu:#3B6FE0;--fond:#F7F5FC;--txt:#1F1640;--gris:#6B6585;--bord:#E3DEF2;--ok:#1B7F4B;--err:#C62828}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:var(--txt);background:#fff;font-size:16px;line-height:1.55}
-a{color:var(--v)}
-.wrap{max-width:860px;margin:0 auto;padding:0 16px}
-.bandeau{height:5px;background:linear-gradient(90deg,var(--rose),var(--bleu))}
-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;max-width:860px;margin:0 auto}
-header img{height:34px}
-.btn{display:inline-block;border:0;border-radius:999px;padding:14px 26px;font:inherit;font-weight:900;font-size:17px;color:#fff;background:linear-gradient(90deg,var(--rose),var(--bleu));text-decoration:none;cursor:pointer;text-align:center}
-.btn.petit{padding:9px 18px;font-size:14px}
-.btn:disabled{opacity:.6;cursor:wait}
-.hero{background:var(--nuit);color:#fff;position:relative;overflow:hidden;padding:44px 0 52px}
-.hero:before{content:"";position:absolute;width:520px;height:520px;right:-200px;top:-220px;border-radius:50%;background:radial-gradient(circle,rgba(255,47,237,.75),rgba(255,47,237,0) 65%)}
-.hero:after{content:"";position:absolute;width:560px;height:560px;left:-260px;bottom:-330px;border-radius:50%;background:radial-gradient(circle,rgba(59,111,224,.8),rgba(59,111,224,0) 65%)}
-.hero .wrap{position:relative;z-index:1}
-.kick{font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:13px;color:#ffb8f8}
-.hero h1{font-size:clamp(32px,7vw,52px);line-height:1.05;margin:10px 0 14px;font-weight:900}
-.hero h1 span{color:#F58CF7}
-.hero p{font-size:18px;font-weight:600;opacity:.92;margin:0 0 24px;max-width:620px}
-.pastilles{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
-.pastilles span{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px}
-section{padding:44px 0}
-section.gris{background:var(--fond)}
-h2{color:var(--v);font-size:clamp(24px,5vw,32px);line-height:1.15;margin:0 0 8px;font-weight:900}
-.chapo{color:var(--gris);margin:0 0 24px;font-size:17px}
-.constat{display:grid;gap:12px}
-.constat div{background:#fff;border:1px solid var(--bord);border-left:4px solid var(--rose);border-radius:12px;padding:14px 16px;font-weight:600}
-.seances{display:grid;gap:14px}
-.seance{background:#fff;border:1px solid var(--bord);border-radius:16px;padding:18px;display:grid;grid-template-columns:52px 1fr;gap:14px}
-.seance .n{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--rose),var(--bleu));color:#fff;display:grid;place-items:center;font-weight:900;font-size:24px}
-.seance h3{margin:0 0 4px;color:var(--v);font-size:19px}
-.seance ul{margin:6px 0 10px;padding-left:20px;color:var(--gris)}
-.livrable{background:#FDF0FF;border-radius:10px;padding:8px 12px;font-weight:700;color:var(--v);font-size:15px}
-.livrable b{color:#B42BD9}
-.bonus{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
-.bonus div{border:2px solid var(--bord);border-radius:14px;padding:16px}
-.bonus b{display:block;color:var(--v);font-size:17px}
-.bonus small{color:#B42BD9;font-weight:800}
-.formateur{display:grid;grid-template-columns:96px 1fr;gap:18px;align-items:start}
-.avatar{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,var(--rose),var(--bleu));color:#fff;display:grid;place-items:center;font-size:34px;font-weight:900}
-.formateur ul{padding-left:20px;margin:8px 0 0}
-.etapes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;counter-reset:e}
-.etapes div{background:#fff;border:1px solid var(--bord);border-radius:14px;padding:16px;counter-increment:e}
-.etapes div:before{content:counter(e);display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--v);color:#fff;font-weight:900;margin-bottom:6px}
-.etapes b{display:block;color:var(--v)}
-.pratique{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.pratique div{background:var(--fond);border-radius:12px;padding:14px}
-.pratique b{display:block;color:var(--v);font-size:18px}
-details{border-bottom:1px solid var(--bord);padding:14px 0}
-summary{font-weight:800;color:var(--v);cursor:pointer}
-details p{margin:8px 0 0;color:var(--gris)}
-.cta-centre{text-align:center;margin-top:26px}
-/* formulaire */
-#candidater{background:var(--nuit);color:#fff}
-#candidater h2{color:#fff}
-#candidater .carte h2{color:var(--v)}
-#candidater .chapo{color:#d9d2f3}
-.carte{background:#fff;color:var(--txt);border-radius:18px;padding:22px}
-.champ{margin-bottom:18px}
-.champ>label,.q{display:block;font-weight:800;margin-bottom:6px;color:var(--v)}
-.q small{display:block;font-weight:600;color:var(--gris)}
-input[type=text],input[type=tel],textarea{width:100%;padding:12px 14px;border:1px solid var(--bord);border-radius:12px;font:inherit;color:var(--txt)}
-textarea{min-height:84px;resize:vertical}
-input:focus,textarea:focus{outline:2px solid var(--bleu);outline-offset:1px}
-.options{display:grid;gap:8px}
-.options label{display:flex;gap:10px;align-items:center;border:1px solid var(--bord);border-radius:12px;padding:11px 14px;cursor:pointer;font-weight:600}
-.options input{accent-color:#B42BD9;width:18px;height:18px;flex:none}
-.options label:has(input:checked){border-color:#B42BD9;background:#FDF0FF}
-.deux{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 14px}
-.erreur{background:#FDECEC;color:var(--err);border-radius:10px;padding:12px 14px;margin:0 0 14px;font-weight:700}
-.manque{border-color:var(--err)!important}
-.resultat{text-align:center}
-.prix{border:3px solid #B42BD9;border-radius:16px;padding:18px;margin:18px 0;background:#FDF0FF}
-.prix .barre{color:var(--gris);font-weight:800}
-.prix .gros{font-size:40px;font-weight:900;color:var(--v);line-height:1.1}
-.code{display:inline-block;background:var(--v);color:#fff;font-weight:900;letter-spacing:.08em;padding:6px 14px;border-radius:8px;font-size:20px;margin:6px 0}
-.note{font-size:14px;color:var(--gris)}
-footer{text-align:center;color:var(--gris);font-size:13px;padding:24px 16px}
-.flottant{position:fixed;left:16px;right:16px;bottom:14px;z-index:9;display:none}
-.flottant .btn{width:100%;box-shadow:0 8px 24px rgba(31,15,82,.35)}
-@media (max-width:640px){.flottant.vu{display:block}.formateur{grid-template-columns:1fr}.seance{grid-template-columns:1fr}}
-</style>
+<link rel="stylesheet" href="/static/seminaire.css">
+{% include 'seminaire_pixel.html' %}
+<script>fbq('track','ViewContent',{content_name:'Séminaires business plan'});</script>
 </head>
 <body>
-<div class="bandeau"></div>
-<header><img src="/static/logo_accounts.jpg" alt="Account's"><a class="btn petit" href="#candidater">Je candidate</a></header>
+{% set CTA %}<a class="cta vers-quiz" href="/seminaire/candidature"><b>Oui, je candidate pour ma place</b><span>{{ s.places }} places · Réponse immédiate · 2 minutes</span></a>{% endset %}
 
-<div class="hero"><div class="wrap">
-  <div class="kick">Séminaires business plan · dès le {{ s.debut }}</div>
-  <h1>Repartez avec un dossier <span>prêt pour la banque</span></h1>
-  <p>4 séminaires pratiques pour construire votre business plan et votre prévisionnel financier, sur votre propre projet, avec un expert de l'audit et de la finance d'entreprise.</p>
-  <a class="btn" href="#candidater">Je candidate en 2 minutes</a>
-  <div class="pastilles"><span>{{ s.places }} places seulement</span><span>Sélection sur candidature</span><span>4 livrables concrets</span></div>
-</div></div>
+<div class="annonce">Session de lancement · {{ s.places }} places seulement · Démarrage le {{ s.debut }}</div>
+<div class="logo"><img src="/static/logo_accounts.jpg" alt="Account's"></div>
 
-<section><div class="wrap">
-  <h2>Vous vous reconnaissez ?</h2>
-  <p class="chapo">Ce n'est presque jamais le projet qui bloque. C'est le dossier.</p>
-  <div class="constat">
-    <div>La banque vous demande « un business plan et un prévisionnel », et vous ne savez pas par où commencer.</div>
-    <div>Vous ne savez pas combien demander, ni si votre projet sera vraiment rentable.</div>
-    <div>Vous avez des chiffres, mais vous ne savez pas les expliquer ni les défendre face à un banquier ou un investisseur.</div>
-  </div>
-</div></section>
-
-<section class="gris"><div class="wrap">
-  <h2>Le programme : 4 séminaires, 4 livrables</h2>
-  <p class="chapo">À chaque séminaire, vous travaillez sur votre projet et vous repartez avec une pièce de votre dossier.</p>
-  <div class="seances">
-    <div class="seance"><div class="n">1</div><div>
-      <h3>Votre idée face au marché</h3>
-      <ul><li>Le problème que vous résolvez, et pour qui</li><li>Votre clientèle cible et vos concurrents</li><li>Des hypothèses de ventes réalistes</li></ul>
-      <div class="livrable"><b>Livrable :</b> votre étude de marché chiffrée</div></div></div>
-    <div class="seance"><div class="n">2</div><div>
-      <h3>Votre offre, vos prix, votre modèle</h3>
-      <ul><li>Une offre claire et différente</li><li>Le coût de revient et le bon prix de vente</li><li>Vos besoins de démarrage, chiffrés</li></ul>
-      <div class="livrable"><b>Livrable :</b> votre grille de prix et votre modèle économique</div></div></div>
-    <div class="seance"><div class="n">3</div><div>
-      <h3>Votre prévisionnel financier</h3>
-      <ul><li>Plan de financement : apport, crédit, subvention</li><li>Compte de résultat sur 5 ans et trésorerie mois par mois</li><li>Seuil de rentabilité et capacité de remboursement</li></ul>
-      <div class="livrable"><b>Livrable :</b> votre prévisionnel SYSCOHADA (Excel + PDF)</div></div></div>
-    <div class="seance"><div class="n">4</div><div>
-      <h3>Votre dossier et votre pitch</h3>
-      <ul><li>Ce que regarde vraiment un banquier</li><li>Les pièces du dossier et leur ordre</li><li>Un pitch de 5 minutes, testé en simulation d'entretien</li></ul>
-      <div class="livrable"><b>Livrable :</b> votre résumé de projet et votre pitch prêt</div></div></div>
-  </div>
+<section style="padding-top:22px"><div class="wrap centre">
+  <span class="pill">Séminaires business plan · 4 séances</span>
+  <h1>Obtenez votre financement avec un dossier <span class="acc">prêt pour la banque</span></h1>
+  <p class="lead">En 4 séminaires, vous construisez votre business plan et votre prévisionnel financier sur votre propre projet, avec un auditeur financier qui sait ce que regarde un banquier.</p>
+  <div class="video"><div class="ecran">
+    {% if s.video %}
+      <iframe src="https://www.youtube-nocookie.com/embed/{{ s.video }}?rel=0" title="Présentation des séminaires" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    {% else %}
+      <div class="visuel"><svg class="doc" viewBox="0 0 200 200" aria-hidden="true">
+        <defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF2FED"/><stop offset="1" stop-color="#3B6FE0"/></linearGradient></defs>
+        <rect x="45" y="20" width="110" height="145" rx="14" fill="#fff"/>
+        <rect x="62" y="42" width="60" height="9" rx="4" fill="#331C77"/>
+        <rect x="62" y="60" width="76" height="6" rx="3" fill="#D9D2F3"/><rect x="62" y="72" width="70" height="6" rx="3" fill="#D9D2F3"/>
+        <rect x="64" y="118" width="12" height="28" rx="3" fill="url(#gd)"/><rect x="82" y="104" width="12" height="42" rx="3" fill="url(#gd)"/>
+        <rect x="100" y="92" width="12" height="54" rx="3" fill="url(#gd)"/><rect x="118" y="80" width="12" height="66" rx="3" fill="url(#gd)"/>
+        <circle cx="150" cy="158" r="26" fill="url(#gd)"/><path d="M138 158l8 8 16-17" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg></div>
+    {% endif %}
+  </div></div>
+  <div class="cta-zone">{{ CTA }}</div>
 </div></section>
 
 <section><div class="wrap">
-  <h2>Vos bonus</h2>
-  <p class="chapo">Inclus pour chaque participant.</p>
-  <div class="bonus">
-    <div><b>L'outil prévisionnel Account's</b><small>Valeur 24 900 FCFA</small><br>Votre prévisionnel aux normes SYSCOHADA, pour les 17 pays OHADA, à mettre à jour autant que nécessaire pendant 12 mois.</div>
-    <div><b>Le modèle de business plan</b>Le plan type à compléter, et la liste des pièces à fournir à la banque.</div>
-    <div><b>30 min de relecture individuelle</b>Votre dossier relu avant votre rendez-vous bancaire.</div>
-    <div><b>Le groupe des participants</b>Un groupe WhatsApp d'entraide, et une attestation de participation.</div>
+  <h2 class="centre">Pourquoi tant de projets <span class="acc">sont refusés par la banque</span></h2>
+  <div class="lueur recit etroit" style="margin-top:30px">
+    <p>Vous avez un projet. Vous y croyez. Vous allez voir la banque, et on vous répond : <strong>« Revenez avec un business plan et un prévisionnel. »</strong></p>
+    <p>Alors vous cherchez un modèle sur internet. Vous remplissez des tableaux sans trop savoir d'où viennent les chiffres. Ou vous payez quelqu'un pour le faire à votre place.</p>
+    <p class="fort">Le jour du rendez-vous, le banquier pose trois questions… et vous ne savez pas défendre vos propres chiffres.</p>
+    <p>Dans la plupart des cas, ce n'est pas le projet qui est mauvais. <strong>C'est le dossier.</strong> Un besoin de financement mal calculé, un marché jamais chiffré, une capacité de remboursement que personne n'a vérifiée.</p>
+    <p>Les séminaires sont faits pour ça : <strong>construire votre dossier vous-même, accompagné, et repartir en sachant l'expliquer.</strong></p>
   </div>
-</div></section>
 
-<section class="gris"><div class="wrap">
-  <h2>Votre formateur</h2>
-  <div class="formateur">
-    <div class="avatar">RF</div>
-    <div>
-      <p style="margin:0"><b style="color:var(--v);font-size:19px">Rodney Fotsing</b><br>Auditeur financier, candidat au diplôme d'expertise comptable (DEC)</p>
-      <ul>
-        <li>Auditeur financier chez KPMG France</li>
-        <li>Audit interne au Crédit Agricole</li>
-        <li>Aujourd'hui en expertise comptable chez RYDGE Conseil</li>
-        <li>Débuts dans des cabinets d'audit au Cameroun</li>
-      </ul>
-    </div>
+  <div class="trio">
+    <div class="perso"><div class="cadre"><div class="fond"><span class="tag">Le formateur</span><div class="initiales">RF</div></div></div>
+      <h3>Rodney Fotsing</h3><div class="sous">Auditeur financier · candidat au DEC</div>
+      <p>Auditeur financier chez KPMG France, audit interne au Crédit Agricole, aujourd'hui en expertise comptable chez RYDGE Conseil. Débuts dans des cabinets d'audit au Cameroun.</p>
+      <span class="badge">Lit les chiffres comme un banquier</span></div>
+    <div class="perso"><div class="cadre"><div class="fond"><span class="tag">L'organisateur</span><img class="logo-blanc" src="/static/logo_accounts.jpg" alt="Account's"></div></div>
+      <h3>ACCOUNT'S SARL</h3><div class="sous">Accompagnement de projets</div>
+      <p>Le cabinet qui a conçu l'outil de prévisionnel en ligne aux normes SYSCOHADA, pour les porteurs de projet des 17 pays OHADA.</p>
+      <span class="badge">Normes SYSCOHADA</span></div>
+    <div class="perso"><div class="cadre"><div class="fond"><span class="tag">Le format</span><div class="initiales" style="font-size:38px">{{ s.places }}</div></div></div>
+      <h3>Un petit groupe</h3><div class="sous">{{ s.places }} participants, sur candidature</div>
+      <p>Chacun travaille sur son propre projet, avec des échéances à chaque séance. C'est ce qui permet d'aller au bout.</p>
+      <span class="badge">Démarrage le {{ s.debut }}</span></div>
   </div>
+  <div class="cta-zone">{{ CTA }}</div>
 </div></section>
 
 <section><div class="wrap">
-  <h2>Infos pratiques</h2>
-  <div class="pratique">
-    <div><b>{{ s.debut | capitalize }}</b>Premier séminaire</div>
-    <div><b>4 séminaires</b>Un livrable à chacun</div>
-    <div><b>{{ s.places }} places</b>Sélection sur candidature</div>
-    <div><b>{{ s.lieu or 'Lieu' }}</b>{% if s.lieu %}Lieu des séminaires{% else %}Précisé aux candidats retenus{% endif %}</div>
-  </div>
-  <p class="chapo" style="margin-top:18px"><b style="color:#B42BD9">Offre de lancement</b> réservée aux {{ s.nb_lancement }} premiers inscrits, révélée à la fin du formulaire.</p>
+  <h2 class="centre">Voici tout ce que vous recevez :</h2>
 
-  <h2 style="margin-top:30px">Comment s'inscrire</h2>
+  <div class="lueur offre">
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="16" y="22" width="68" height="60" rx="9" fill="#fff"/><rect x="16" y="22" width="68" height="16" rx="9" fill="#FF2FED"/><rect x="16" y="31" width="68" height="7" fill="#FF2FED"/><g fill="#331C77"><rect x="26" y="46" width="10" height="10" rx="2"/><rect x="45" y="46" width="10" height="10" rx="2"/><rect x="64" y="46" width="10" height="10" rx="2"/><rect x="26" y="63" width="10" height="10" rx="2"/></g><rect x="45" y="63" width="10" height="10" rx="2" fill="#3B6FE0"/><rect x="30" y="14" width="6" height="14" rx="3" fill="#fff"/><rect x="64" y="14" width="6" height="14" rx="3" fill="#fff"/></svg></div></div>
+    <div><span class="etiquette">Inclus</span><h3>Les 4 séminaires, 4 livrables.</h3>
+      <ul class="coches">
+        <li><b>Séminaire 1 · Votre marché.</b> Clientèle cible, concurrents, hypothèses de ventes chiffrées.</li>
+        <li><b>Séminaire 2 · Votre offre et vos prix.</b> Coût de revient, prix de vente, modèle économique, besoins de démarrage.</li>
+        <li><b>Séminaire 3 · Votre prévisionnel.</b> Plan de financement, compte de résultat sur 5 ans, trésorerie, seuil de rentabilité.</li>
+        <li><b>Séminaire 4 · Votre dossier et votre pitch.</b> Ce que regarde le banquier, les pièces du dossier, une simulation d'entretien.</li>
+      </ul></div>
+  </div>
+
+  <div class="lueur offre inverse">
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="18" y="16" width="64" height="70" rx="8" fill="#fff"/><g fill="#D9D2F3"><rect x="28" y="28" width="44" height="5" rx="2"/><rect x="28" y="38" width="36" height="5" rx="2"/></g><g fill="#FF2FED"><rect x="30" y="62" width="8" height="14" rx="2"/></g><rect x="43" y="55" width="8" height="21" rx="2" fill="#B33BE8"/><rect x="56" y="48" width="8" height="28" rx="2" fill="#3B6FE0"/></svg></div></div>
+    <div><span class="etiquette">Bonus 1</span><h3>L'outil prévisionnel Account's.</h3><div class="valeur">Valeur 24 900 FCFA</div>
+      <ul class="coches">
+        <li>Votre prévisionnel aux normes SYSCOHADA, pour les 17 pays OHADA.</li>
+        <li>Un fichier Excel en formules et le plan financier en PDF, prêts pour la banque.</li>
+        <li>Impôts et charges sociales adaptés à votre pays.</li>
+        <li>À mettre à jour autant que nécessaire pendant 12 mois.</li>
+      </ul></div>
+  </div>
+
+  <div class="lueur offre">
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="22" y="14" width="56" height="72" rx="8" fill="#fff"/><rect x="36" y="9" width="28" height="12" rx="5" fill="#331C77"/><g stroke="#FF2FED" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M32 36l4 4 7-8"/><path d="M32 54l4 4 7-8"/><path d="M32 72l4 4 7-8"/></g><g fill="#D9D2F3"><rect x="50" y="35" width="20" height="5" rx="2"/><rect x="50" y="53" width="20" height="5" rx="2"/><rect x="50" y="71" width="20" height="5" rx="2"/></g></svg></div></div>
+    <div><span class="etiquette">Bonus 2</span><h3>Le kit dossier bancaire.</h3>
+      <ul class="coches">
+        <li>Le modèle de business plan à compléter, section par section.</li>
+        <li>La liste des pièces que demande la banque, dans le bon ordre.</li>
+        <li>Les questions que pose un banquier, et comment y répondre.</li>
+        <li>Un kit que vous gardez pour vos prochains projets.</li>
+      </ul></div>
+  </div>
+
+  <div class="lueur offre inverse">
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="30" fill="#fff"/><path d="M50 30v21l13 8" stroke="#331C77" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="74" cy="74" r="14" fill="#FF2FED"/><path d="M67 74l5 5 9-10" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+    <div><span class="etiquette">Bonus 3</span><h3>30 minutes de relecture individuelle.</h3>
+      <ul class="coches">
+        <li>Votre dossier relu avant votre rendez-vous bancaire.</li>
+        <li>Ce qui tient, ce qui manque, ce qui doit changer.</li>
+        <li>Vos questions posées en direct, sur votre propre situation.</li>
+      </ul></div>
+  </div>
+
+  <div class="lueur offre">
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M20 26h44a8 8 0 018 8v22a8 8 0 01-8 8H40l-12 10v-10h-8a8 8 0 01-8-8V34a8 8 0 018-8z" fill="#fff"/><path d="M60 46h20a8 8 0 018 8v16a8 8 0 01-8 8h-2v9l-10-9H60a8 8 0 01-8-8z" fill="#3B6FE0"/><g fill="#FF2FED"><circle cx="30" cy="45" r="4"/><circle cx="42" cy="45" r="4"/><circle cx="54" cy="45" r="4"/></g></svg></div></div>
+    <div><span class="etiquette">Bonus 4</span><h3>Le groupe des participants.</h3>
+      <ul class="coches">
+        <li>Un groupe WhatsApp d'entraide entre les {{ s.places }} participants.</li>
+        <li>Les supports et les modèles de chaque séance au même endroit.</li>
+        <li>Une attestation de participation à la fin des 4 séminaires.</li>
+      </ul></div>
+  </div>
+  <div class="cta-zone">{{ CTA }}</div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 class="centre">Vous avez donc <span class="acc">2 options</span> dès maintenant</h2>
+  <div class="options2">
+    <div class="opt"><span class="mini">SEUL</span><h3>Option 1 : continuer à vous débrouiller seul.</h3>
+      <p>Vous téléchargez des modèles, vous regardez des vidéos, vous remplissez des tableaux.</p>
+      <p>Puis vous déposez un dossier que personne n'a relu, avec des chiffres que vous aurez du mal à défendre face au banquier.</p></div>
+    <div class="ou">ou…</div>
+    <div class="opt bonne"><span class="mini">ACCOMPAGNÉ</span><h3>Option 2 : construire un dossier solide en 4 séminaires.</h3>
+      <p>Vous avancez avec la méthode, les modèles et l'outil prévisionnel, en petit groupe, avec un formateur qui relit votre travail.</p>
+      <p>Vous repartez avec votre dossier complet, et vous savez l'expliquer.</p></div>
+  </div>
+
+  <h2 class="centre" style="margin-top:64px">Comment réserver votre place</h2>
   <div class="etapes">
-    <div><b>Vous candidatez</b>6 questions rapides sur votre projet, 2 minutes.</div>
-    <div><b>Vous réservez votre place</b>Si votre profil est retenu, paiement sécurisé sur notre boutique Chariow (Mobile Money ou carte).</div>
-    <div><b>Vous rejoignez le groupe</b>Juste après le paiement, vous accédez au groupe WhatsApp des participants.</div>
+    <div><b>Vous candidatez</b><span>Quelques questions sur votre projet, 2 minutes. Réponse immédiate.</span></div>
+    <div><b>Vous réservez</b><span>Si votre profil est retenu, paiement sécurisé sur notre boutique Chariow (Mobile Money ou carte).</span></div>
+    <div><b>Vous rejoignez le groupe</b><span>Juste après le paiement, vous accédez au groupe WhatsApp des participants.</span></div>
   </div>
-  <div class="cta-centre"><a class="btn" href="#candidater">Je candidate</a></div>
+  <div class="cta-zone">{{ CTA }}</div>
 </div></section>
 
-<section class="gris"><div class="wrap">
-  <h2>Questions fréquentes</h2>
-  <details><summary>Je n'y connais rien en comptabilité, est-ce pour moi ?</summary><p>Oui. Les séminaires sont faits pour les porteurs de projet. L'outil prévisionnel fait les calculs : vous apprenez à fournir les bons chiffres et à les expliquer.</p></details>
-  <details><summary>Mon projet n'est encore qu'une idée, puis-je candidater ?</summary><p>Oui. Le premier séminaire part de l'idée. Il faut seulement avoir choisi le projet sur lequel vous voulez travailler.</p></details>
-  <details><summary>Pourquoi une candidature ?</summary><p>Parce qu'il n'y a que {{ s.places }} places et qu'on travaille sur chaque projet. On s'assure que le séminaire vous apportera vraiment quelque chose.</p></details>
-  <details><summary>La banque va-t-elle forcément m'accorder le crédit ?</summary><p>Personne ne peut le garantir. Vous repartez avec un dossier complet, aux normes SYSCOHADA, et vous saurez le défendre. C'est ce qui manque à la plupart des dossiers refusés.</p></details>
-</div></section>
-
-<section id="candidater"><div class="wrap">
-  <h2>Candidatez à la session du {{ s.debut }}</h2>
-  <p class="chapo">{{ s.places }} places. Répondez à ces quelques questions : elles nous permettent de vérifier que le séminaire correspond à votre projet.</p>
-  <div class="carte" id="zone">
-    <form id="form" novalidate>
-      <div class="deux">
-        <div class="champ"><label for="nom">Nom et prénom</label><input type="text" id="nom" name="nom" autocomplete="name"></div>
-        <div class="champ"><label for="whatsapp">Numéro WhatsApp</label><input type="tel" id="whatsapp" name="whatsapp" autocomplete="tel" placeholder="+237 6XX XX XX XX"></div>
-      </div>
-      <div class="champ"><label for="ville">Ville et pays</label><input type="text" id="ville" name="ville" placeholder="Ex. Douala, Cameroun"></div>
-
-      {% set questions = [
-        ('stade', '1. Où en est votre projet ?', ''),
-        ('objectif', '3. Pourquoi avez-vous besoin d\'un business plan ?', ''),
-        ('delai', '4. Quand comptez-vous déposer votre dossier ou vous lancer ?', ''),
-        ('presence', '5. Pouvez-vous être présent aux 4 séminaires, à partir du ' ~ s.debut ~ ' ?', ''),
-        ('engagement', '6. Êtes-vous prêt à investir dans un accompagnement pour réussir votre projet ?', '')] %}
-      {% for cle, titre, aide in questions %}
-        {% if cle == 'objectif' %}
-        <div class="champ"><label for="projet" class="q">2. Décrivez votre projet en une ou deux phrases.<small>Activité, ville, clientèle visée.</small></label><textarea id="projet" name="projet" maxlength="600"></textarea></div>
-        {% endif %}
-        <div class="champ" data-groupe="{{ cle }}"><span class="q">{{ titre }}</span><div class="options">
-          {% for o in choix[cle] %}<label><input type="radio" name="{{ cle }}" value="{{ o }}"> {{ o }}</label>{% endfor %}
-        </div></div>
-      {% endfor %}
-      <div id="err" class="erreur" hidden></div>
-      <button class="btn" id="envoyer" type="submit" style="width:100%">Envoyer ma candidature</button>
-      <p class="note" style="text-align:center;margin-bottom:0">Vos réponses servent uniquement à l'organisation des séminaires.</p>
-    </form>
+<section><div class="wrap etroit">
+  <div class="centre"><div class="sur">Questions fréquentes</div><h2>Toutes les réponses à vos questions</h2></div>
+  <div class="faq">
+    <details open><summary>Je n'y connais rien en comptabilité, est-ce pour moi ?</summary><p>Oui. Les séminaires sont faits pour les porteurs de projet, pas pour les comptables. L'outil prévisionnel fait les calculs : vous apprenez à fournir les bons chiffres et à les expliquer.</p></details>
+    <details><summary>Mon projet n'est encore qu'une idée, puis-je candidater ?</summary><p>Oui. Le premier séminaire part de l'idée. Il faut seulement avoir choisi le projet sur lequel vous voulez travailler.</p></details>
+    <details><summary>Pourquoi faut-il candidater ?</summary><p>Parce qu'il n'y a que {{ s.places }} places et qu'on travaille vraiment sur chaque projet. Les questions servent à vérifier que les séminaires vous apporteront quelque chose. La réponse s'affiche tout de suite.</p></details>
+    <details><summary>Quel est le prix ?</summary><p>Le prix et l'offre de lancement réservée aux {{ s.nb_lancement }} premiers inscrits s'affichent à la fin de la candidature, si votre profil est retenu.</p></details>
+    <details><summary>La banque va-t-elle forcément m'accorder le crédit ?</summary><p>Personne ne peut le garantir. Vous repartez avec un dossier complet, aux normes SYSCOHADA, et vous saurez le défendre. C'est ce qui manque à la plupart des dossiers refusés.</p></details>
+    <details><summary>Où et quand ont lieu les séminaires ?</summary><p>Le premier séminaire a lieu le {{ s.debut }}.{% if s.lieu %} Lieu : {{ s.lieu }}.{% endif %} Le calendrier complet est envoyé aux participants dans le groupe WhatsApp.</p></details>
+    <details><summary>Qu'est-ce que je reçois exactement ?</summary><p>Les 4 séminaires et leurs 4 livrables, l'outil prévisionnel Account's (valeur 24 900 FCFA), le kit dossier bancaire, 30 minutes de relecture individuelle, l'accès au groupe des participants et une attestation.</p></details>
   </div>
+  <div class="cta-zone">{{ CTA }}</div>
 </div></section>
 
-<footer>ACCOUNT'S SARL · Séminaires business plan{% if whatsapp %} · <a href="https://wa.me/{{ whatsapp }}">Nous écrire sur WhatsApp</a>{% endif %}</footer>
-<div class="flottant" id="flottant"><a class="btn" href="#candidater">Je candidate</a></div>
+<footer>
+  <img src="/static/logo_accounts.jpg" alt="Account's">
+  <p>ACCOUNT'S SARL · Séminaires business plan{% if whatsapp %} · <a href="https://wa.me/{{ whatsapp }}">Nous écrire sur WhatsApp</a>{% endif %}</p>
+  <p>Les séminaires sont une formation et un accompagnement. Ils ne garantissent pas l'obtention d'un financement, qui dépend de chaque projet et de chaque établissement.</p>
+</footer>
+<div class="flottant" id="flottant"><a class="cta vers-quiz" href="/seminaire/candidature"><b>Je candidate</b><span>{{ s.places }} places · 2 minutes</span></a></div>
 
 <script>
-const S = {{ s | tojson }};
-const fcfa = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + '\u00a0FCFA';
-const p = new URLSearchParams(location.search);
-const flottant = document.getElementById('flottant'), cible = document.getElementById('candidater');
-addEventListener('scroll', () => {
-  const r = cible.getBoundingClientRect();
-  flottant.classList.toggle('vu', scrollY > 500 && r.top > innerHeight);
-}, {passive: true});
-
-document.getElementById('form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const f = e.target, err = document.getElementById('err'), b = document.getElementById('envoyer');
-  const d = Object.fromEntries(new FormData(f));
-  ['utm_source', 'utm_campaign', 'utm_content'].forEach(k => d[k] = p.get(k) || '');
-  f.querySelectorAll('.manque').forEach(x => x.classList.remove('manque'));
-  const requis = ['nom', 'whatsapp', 'ville', 'projet', 'stade', 'objectif', 'delai', 'presence', 'engagement'];
-  const vides = requis.filter(k => !(d[k] || '').trim());
-  if (vides.length) {
-    vides.forEach(k => { const el = f.querySelector(`[name=${k}]`); (el.type === 'radio' ? el.closest('.champ').querySelector('.options') : el).classList.add('manque'); });
-    err.textContent = 'Merci de répondre à toutes les questions.'; err.hidden = false;
-    f.querySelector('.manque').scrollIntoView({behavior: 'smooth', block: 'center'}); return;
-  }
-  err.hidden = true; b.disabled = true; b.textContent = 'Envoi…';
-  try {
-    const r = await fetch('/seminaire/candidature', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d)});
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.erreur || 'Erreur');
-    afficher(j, d);
-  } catch (x) {
-    err.textContent = x.message === 'Failed to fetch' ? 'Connexion impossible, réessayez.' : x.message; err.hidden = false;
-    b.disabled = false; b.textContent = 'Envoyer ma candidature';
-  }
-});
-
-function afficher(j, d) {
-  const z = document.getElementById('zone'), prenom = d.nom.trim().split(/\s+/)[0];
-  if (j.retenu) {
-    window.fbq && fbq('track', 'Lead', {content_name: 'Séminaires business plan'});
-    const lien = j.paiement || '#';
-    z.innerHTML = `<div class="resultat">
-      <h2>Bonne nouvelle, ${prenom} : votre profil est retenu</h2>
-      <p>La série de 4 séminaires business plan commence le ${S.debut}. Elle est limitée à ${S.places} participants. Votre place est confirmée dès votre paiement.</p>
-      <div class="prix">
-        <div class="barre">Votre investissement pour les 4 séminaires et tous les bonus : ${fcfa(S.prix)}</div>
-        <div style="margin-top:10px;font-weight:800;color:#B42BD9">OFFRE DE LANCEMENT · ${S.nb_lancement} premiers inscrits</div>
-        <div class="gros">${fcfa(S.prix_lancement)}</div>
-        <div>soit 25 % de réduction avec le code</div>
-        <div class="code">${j.code}</div>
-        <div class="note">À saisir au moment du paiement, tant qu'il reste des places au tarif de lancement.</div>
-      </div>
-      <a class="btn" id="payer" href="${lien}" style="width:100%">Je réserve ma place</a>
-      <p class="note">Paiement sécurisé sur Chariow (Mobile Money ou carte). Juste après, vous accédez au groupe WhatsApp des participants.</p>
-    </div>`;
-    document.getElementById('payer').addEventListener('click', () => window.fbq && fbq('track', 'InitiateCheckout', {value: S.prix_lancement, currency: 'XAF'}));
-  } else {
-    z.innerHTML = `<div class="resultat">
-      <h2>Merci ${prenom}, votre candidature est enregistrée</h2>
-      <p>Cette session demande d'être présent aux 4 séminaires et de s'engager dans l'accompagnement. Votre profil ne correspond pas tout à fait à cette session, mais nous vous avons inscrit sur la liste d'attente de la prochaine.</p>
-      <p>En attendant, vous pouvez déjà construire votre prévisionnel avec notre outil en ligne.</p>
-      <a class="btn" href="https://dtrrneoe.mychariow.store">Découvrir l'outil prévisionnel</a>
-    </div>`;
-  }
-  z.scrollIntoView({behavior: 'smooth', block: 'start'});
-}
+// Garde les paramètres de la pub (utm) jusqu'au formulaire.
+document.querySelectorAll('.vers-quiz').forEach(a => a.href += location.search);
+const fl = document.getElementById('flottant');
+addEventListener('scroll', () => fl.classList.toggle('vu', scrollY > 700 && innerHeight + scrollY < document.body.scrollHeight - 400), {passive: true});
 </script>
 </body>
 </html>

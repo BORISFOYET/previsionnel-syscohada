@@ -67,7 +67,8 @@ perception non modélisés ; prévisionnel hors taxes, sans délais clients/four
 
 ## Séminaires business plan (`/seminaire`)
 
-Page de présentation des 4 séminaires, puis formulaire de candidature en 6 questions. Le prix n'apparaît
+Page de présentation des 4 séminaires (`/seminaire`), puis candidature en mode quiz, une question par écran
+(`/seminaire/candidature`), avec 6 questions et les coordonnées en dernier. Le prix n'apparaît
 qu'après le formulaire, et seulement aux candidats retenus (présents aux 4 séances, prêts à investir, projet
 décrit). Ceux-ci sont envoyés vers le produit Chariow ; les autres passent en liste d'attente.
 
@@ -77,6 +78,7 @@ Réglages (variables d'environnement Vercel, puis redéployer) :
 - `SEMINAIRE_CODE_PROMO` : code de réduction Chariow de 25 %, limité à 5 utilisations (par défaut `LANCEMENT25`) ;
 - `SEMINAIRE_WEBHOOK` : adresse de la feuille Google qui enregistre les candidatures (voir `outils/feuille_candidatures.gs`) ;
 - `SEMINAIRE_LIEU` : lieu affiché sur la page (ex. « Locaux d'ACCOUNT'S, Douala » ou « En ligne ») ;
+- `SEMINAIRE_VIDEO` : identifiant YouTube de la vidéo de présentation (ex. `dQw4w9WgXcQ`), facultatif ;
 - `SEMINAIRE_WHATSAPP` : numéro de contact, chiffres seulement (ex. `2376XXXXXXXX`), facultatif.
 
 Côté Chariow : produit de type Service à 69 900 FCFA, quantité 20, et dans les réglages du produit le lien du

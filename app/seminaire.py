@@ -25,7 +25,8 @@ SEMINAIRE = {
     'prix': 69900,
     'prix_lancement': 52425,
     'nb_lancement': 5,
-    'lieu': os.environ.get('SEMINAIRE_LIEU', ''),  # ex. « Locaux d'ACCOUNT'S, Douala » ou « En ligne (Zoom) »
+    'lieu': os.environ.get('SEMINAIRE_LIEU', ''),    # ex. « Locaux d'ACCOUNT'S, Douala » ou « En ligne (Zoom) »
+    'video': os.environ.get('SEMINAIRE_VIDEO', ''),  # identifiant YouTube de la vidéo de présentation, facultatif
 }
 
 CHOIX = {
@@ -73,6 +74,12 @@ async def enregistrer(ligne):
 @router.get('/seminaire', response_class=HTMLResponse)
 def page(request: Request):
     return tpl.TemplateResponse(request, 'seminaire.html', {
+        's': SEMINAIRE, 'choix': CHOIX, 'pixel': PIXEL_META, 'whatsapp': WHATSAPP})
+
+
+@router.get('/seminaire/candidature', response_class=HTMLResponse)
+def quiz(request: Request):
+    return tpl.TemplateResponse(request, 'seminaire_quiz.html', {
         's': SEMINAIRE, 'choix': CHOIX, 'pixel': PIXEL_META, 'whatsapp': WHATSAPP})
 
 

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Candidature · Séminaires business plan · Account's</title>
+<meta name="description" content="Candidatez aux 4 séminaires business plan qui démarrent le {{ s.debut }}. {{ s.places }} places, réponse immédiate.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/seminaire.css">
+{% include 'seminaire_pixel.html' %}
+</head>
+<body>
+<div class="logo"><a href="/seminaire"><img src="/static/logo_accounts.jpg" alt="Account's"></a></div>
+
+<main class="qz" id="quiz">
+  <!-- Accueil -->
+  <section class="qz-ecran actif" data-ecran="intro">
+    <div class="qz-carte centre">
+      <span class="pill">Candidature · 2 minutes</span>
+      <h1>Votre projet est-il prêt pour <span class="acc">les séminaires ?</span></h1>
+      <p class="lead">6 questions rapides sur votre projet. Il n'y a que {{ s.places }} places : elles nous permettent de vérifier que les séminaires vous apporteront vraiment quelque chose. La réponse s'affiche tout de suite.</p>
+      <ul class="puces"><li>Votre marché</li><li>Votre offre et vos prix</li><li>Votre prévisionnel</li><li>Votre dossier bancaire</li></ul>
+      <button type="button" class="cta" id="commencer"><b>Je commence ma candidature</b><span>Gratuit · Sans engagement · Réponse immédiate</span></button>
+    </div>
+  </section>
+
+  <!-- Questions -->
+  <section class="qz-ecran" data-ecran="question">
+    <div class="qz-carte">
+      <div class="qz-haut"><button type="button" class="retour" id="retour">← Retour</button><span class="compte" id="compte"></span></div>
+      <div class="barre"><i id="barre"></i></div>
+      <span class="theme" id="theme"></span>
+      <h2 class="qz-q" id="question"></h2>
+      <p class="qz-aide" id="aide"></p>
+      <div id="zone-reponse"></div>
+    </div>
+  </section>
+
+  <!-- Coordonnées -->
+  <section class="qz-ecran" data-ecran="coordonnees">
+    <div class="qz-carte">
+      <div class="qz-haut"><button type="button" class="retour" id="retour2">← Retour</button><span class="compte">Dernière étape</span></div>
+      <div class="barre"><i style="width:100%"></i></div>
+      <div class="centre">
+        <svg class="cadenas" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF2FED"/><stop offset="1" stop-color="#3B6FE0"/></linearGradient></defs><rect x="5" y="10" width="14" height="11" rx="2.5" fill="url(#gc)"/><path d="M8 10V7a4 4 0 018 0v3" fill="none" stroke="#FF8AF6" stroke-width="2.4"/></svg>
+        <h2 class="qz-q">Votre candidature est prête</h2>
+        <p class="qz-aide">Indiquez vos coordonnées pour voir la réponse. Nous vous contacterons sur WhatsApp pour la suite.</p>
+      </div>
+      <form id="form" novalidate>
+        <label for="nom">Nom et prénom</label><input id="nom" name="nom" type="text" autocomplete="name">
+        <label for="whatsapp">Numéro WhatsApp</label><input id="whatsapp" name="whatsapp" type="tel" autocomplete="tel" placeholder="+237 6XX XX XX XX">
+        <label for="ville">Ville et pays</label><input id="ville" name="ville" type="text" placeholder="Ex. Douala, Cameroun">
+        <p class="erreur" id="erreur"></p>
+        <button type="submit" class="cta plein" id="envoyer"><b>Voir ma réponse</b></button>
+        <p class="mention">Vos réponses servent uniquement à l'organisation des séminaires.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Résultat -->
+  <section class="qz-ecran" data-ecran="resultat"><div class="qz-carte centre" id="resultat"></div></section>
+</main>
+
+<footer>
+  <p>ACCOUNT'S SARL · Séminaires business plan · <a href="/seminaire">Revoir le programme</a>{% if whatsapp %} · <a href="https://wa.me/{{ whatsapp }}">Nous écrire sur WhatsApp</a>{% endif %}</p>
+</footer>
+
+<script>
+const S = {{ s | tojson }};
+const C = {{ choix | tojson }};
+const QUESTIONS = [
+  {cle: 'stade', theme: 'Votre projet', q: 'Où en est votre projet ?'},
+  {cle: 'projet', theme: 'Votre projet', q: 'Décrivez votre projet en une ou deux phrases.', aide: 'Votre activité, votre ville, la clientèle que vous visez.', texte: true},
+  {cle: 'objectif', theme: 'Votre objectif', q: 'Pourquoi avez-vous besoin d\'un business plan ?'},
+  {cle: 'delai', theme: 'Votre calendrier', q: 'Quand comptez-vous déposer votre dossier ou vous lancer ?'},
+  {cle: 'presence', theme: 'Votre disponibilité', q: `Pouvez-vous être présent aux 4 séminaires, à partir du ${S.debut} ?`},
+  {cle: 'engagement', theme: 'Votre engagement', q: 'Êtes-vous prêt à investir dans un accompagnement pour réussir votre projet ?'},
+];
+const R = {}, utm = new URLSearchParams(location.search);
+let i = 0;
+const $ = id => document.getElementById(id);
+const fcfa = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
+const esc = t => t.replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+
+function ecran(nom) {
+  document.querySelectorAll('.qz-ecran').forEach(e => e.classList.toggle('actif', e.dataset.ecran === nom));
+  scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function afficher() {
+  const Q = QUESTIONS[i];
+  $('compte').textContent = `Question ${i + 1} sur ${QUESTIONS.length}`;
+  $('barre').style.width = `${(i / QUESTIONS.length) * 100}%`;
+  $('theme').textContent = Q.theme;
+  $('question').textContent = Q.q;
+  $('aide').textContent = Q.aide || '';
+  $('aide').hidden = !Q.aide;
+  const z = $('zone-reponse');
+  if (Q.texte) {
+    z.innerHTML = `<textarea id="t" maxlength="600" placeholder="Ex. Transformation de manioc en gari pour les supermarchés de Douala."></textarea>
+      <p class="erreur" id="terr"></p><button type="button" class="cta plein" id="suite"><b>Continuer</b></button>`;
+    $('t').value = R[Q.cle] || '';
+    $('suite').onclick = () => {
+      const v = $('t').value.trim();
+      if (v.length < 15) { $('terr').textContent = 'Dites-nous en un peu plus sur votre projet (quelques mots suffisent).'; return; }
+      R[Q.cle] = v; suivant();
+    };
+  } else {
+    z.innerHTML = '<div class="reponses">' + C[Q.cle].map((o, k) =>
+      `<button type="button" class="reponse${R[Q.cle] === o ? ' choisie' : ''}" data-v="${esc(o)}"><span class="lettre">${'ABCD'[k]}</span>${esc(o)}</button>`).join('') + '</div>';
+    z.querySelectorAll('.reponse').forEach(b => b.onclick = () => {
+      z.querySelectorAll('.reponse').forEach(x => x.classList.remove('choisie'));
+      b.classList.add('choisie'); R[Q.cle] = b.dataset.v;
+      setTimeout(suivant, 260);
+    });
+  }
+}
+function suivant() { if (++i < QUESTIONS.length) afficher(); else ecran('coordonnees'); }
+
+$('commencer').onclick = () => { i = 0; afficher(); ecran('question'); };
+$('retour').onclick = () => { if (i === 0) ecran('intro'); else { i--; afficher(); } };
+$('retour2').onclick = () => { i = QUESTIONS.length - 1; afficher(); ecran('question'); };
+
+$('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const d = {...R, ...Object.fromEntries(new FormData(e.target))};
+  ['utm_source', 'utm_campaign', 'utm_content'].forEach(k => d[k] = utm.get(k) || '');
+  if (!['nom', 'whatsapp', 'ville'].every(k => (d[k] || '').trim())) { $('erreur').textContent = 'Merci de remplir les trois champs.'; return; }
+  $('erreur').textContent = ''; $('envoyer').disabled = true; $('envoyer').innerHTML = '<b>Envoi…</b>';
+  try {
+    const r = await fetch('/seminaire/candidature', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d)});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.erreur || 'Erreur');
+    resultat(j, d);
+  } catch (x) {
+    $('erreur').textContent = x.message === 'Failed to fetch' ? 'Connexion impossible, réessayez.' : x.message;
+    $('envoyer').disabled = false; $('envoyer').innerHTML = '<b>Voir ma réponse</b>';
+  }
+});
+
+const ANNEAU = (ok) => `<div class="anneau"><svg viewBox="0 0 120 120"><defs><linearGradient id="ga" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF2FED"/><stop offset="1" stop-color="#3B6FE0"/></linearGradient></defs>
+  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+  <circle cx="60" cy="60" r="52" fill="none" stroke="url(#ga)" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="${ok ? 0 : 160}" transform="rotate(-90 60 60)"/></svg><b>${ok ? '✓' : '…'}</b></div>`;
+
+function resultat(j, d) {
+  const prenom = esc(d.nom.trim().split(/\s+/)[0]), z = $('resultat');
+  if (j.retenu) {
+    window.fbq && fbq('track', 'Lead', {content_name: 'Séminaires business plan'});
+    z.innerHTML = `${ANNEAU(true)}<span class="pill">Profil retenu</span>
+      <h2 class="qz-q" style="margin-top:14px">Félicitations ${prenom}, <span class="acc">votre place vous attend</span></h2>
+      <p class="lead">La série de 4 séminaires business plan commence le ${S.debut}, avec ${S.places} participants au maximum. Votre place est confirmée dès votre paiement.</p>
+      <div class="prix-carte">
+        <div class="normal">Votre investissement pour les 4 séminaires et tous les bonus : <b>${fcfa(S.prix)}</b></div>
+        <div class="lancement">OFFRE DE LANCEMENT · ${S.nb_lancement} PREMIERS INSCRITS</div>
+        <div class="gros acc">${fcfa(S.prix_lancement)}</div>
+        <div>soit 25 % de réduction avec le code</div>
+        <div class="code">${esc(j.code)}</div>
+        <div class="mention" style="margin-top:4px">À saisir au moment du paiement, tant qu'il reste des places au tarif de lancement.</div>
+        <ul class="inclus"><li>Les 4 séminaires et leurs 4 livrables</li><li>L'outil prévisionnel Account's (valeur 24 900 FCFA)</li><li>Le kit dossier bancaire</li><li>30 minutes de relecture individuelle</li><li>Le groupe WhatsApp des participants et une attestation</li></ul>
+      </div>
+      <a class="cta plein" id="payer" href="${esc(j.paiement || '#')}"><b>Je réserve ma place</b><span>Paiement sécurisé sur Chariow · Mobile Money ou carte</span></a>
+      <p class="mention">Juste après le paiement, vous accédez au groupe WhatsApp des participants.</p>`;
+    $('payer').addEventListener('click', () => window.fbq && fbq('track', 'InitiateCheckout', {value: S.prix_lancement, currency: 'XAF'}));
+  } else {
+    z.innerHTML = `${ANNEAU(false)}<span class="pill">Liste d'attente</span>
+      <h2 class="qz-q" style="margin-top:14px">Merci ${prenom}, votre candidature est enregistrée</h2>
+      <p class="lead">Cette session demande d'être présent aux 4 séminaires et de s'engager dans l'accompagnement. Votre profil ne correspond pas tout à fait à cette session, mais vous êtes inscrit sur la liste d'attente de la prochaine.</p>
+      <p class="lead" style="margin-top:14px">En attendant, vous pouvez déjà construire votre prévisionnel avec notre outil en ligne.</p>
+      <div class="cta-zone"><a class="cta" href="https://dtrrneoe.mychariow.store"><b>Découvrir l'outil prévisionnel</b></a></div>`;
+  }
+  ecran('resultat');
+}
+</script>
+</body>
+</html>
