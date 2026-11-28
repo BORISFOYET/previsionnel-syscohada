@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import licences
+from . import licences, seminaire
 from .moteur.formulaire import CATEGORIES, COMPTES, FRAIS_DEMARRAGE, PAYS, ErreurSaisie, normaliser_societe
 from .moteur.service import generer_livrables
 
@@ -23,6 +23,7 @@ COOKIE = 'acc_session'
 app = FastAPI(title="Account's — Prévisionnel SYSCOHADA", docs_url=None, redoc_url=None)
 app.mount('/static', StaticFiles(directory=ICI / 'static'), name='static')
 tpl = Jinja2Templates(directory=ICI / 'templates')
+app.include_router(seminaire.router)
 
 
 def cle_session(request):
