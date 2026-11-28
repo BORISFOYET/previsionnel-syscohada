@@ -19,7 +19,7 @@ WEBHOOK = os.environ.get('SEMINAIRE_WEBHOOK', '')                   # Google App
 WHATSAPP = os.environ.get('SEMINAIRE_WHATSAPP', '')                 # numéro de contact au format 2376XXXXXXXX
 PIXEL_META = os.environ.get('PIXEL_META', '1125923300431099')
 THEMES = ('sobre', 'clair', 'or', 'accounts')
-THEME = os.environ.get('SEMINAIRE_THEME', 'or')  # ambiance de couleurs ; ?theme=… dans l'adresse pour comparer
+THEME = os.environ.get('SEMINAIRE_THEME', 'clair')  # ambiance de couleurs ; ?theme=… dans l'adresse pour comparer
 
 SEMINAIRE = {
     'debut': 'samedi 5 décembre 2026',
