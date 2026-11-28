@@ -64,3 +64,21 @@ python3 tests/test_generation.py                      # génère un cas pour cha
 charges sociales patronales, avec la source de chaque taux. À mettre à jour à chaque loi de finances.
 Limites actuelles : taux de droit commun uniquement ; montants planchers/plafonds du minimum de
 perception non modélisés ; prévisionnel hors taxes, sans délais clients/fournisseurs (BFR).
+
+## Séminaires business plan (`/seminaire`)
+
+Page de présentation des 4 séminaires, puis formulaire de candidature en 6 questions. Le prix n'apparaît
+qu'après le formulaire, et seulement aux candidats retenus (présents aux 4 séances, prêts à investir, projet
+décrit). Ceux-ci sont envoyés vers le produit Chariow ; les autres passent en liste d'attente.
+
+Réglages (variables d'environnement Vercel, puis redéployer) :
+
+- `SEMINAIRE_URL_CHARIOW` : lien de la page du produit « Séminaires business plan » sur Chariow ;
+- `SEMINAIRE_CODE_PROMO` : code de réduction Chariow de 25 %, limité à 5 utilisations (par défaut `LANCEMENT25`) ;
+- `SEMINAIRE_WEBHOOK` : adresse de la feuille Google qui enregistre les candidatures (voir `outils/feuille_candidatures.gs`) ;
+- `SEMINAIRE_LIEU` : lieu affiché sur la page (ex. « Locaux d'ACCOUNT'S, Douala » ou « En ligne ») ;
+- `SEMINAIRE_WHATSAPP` : numéro de contact, chiffres seulement (ex. `2376XXXXXXXX`), facultatif.
+
+Côté Chariow : produit de type Service à 69 900 FCFA, quantité 20, et dans les réglages du produit le lien du
+groupe WhatsApp en URL de redirection après achat et dans les instructions après achat.
+Le pixel Meta suit `PageView`, `ViewContent`, `Lead` (candidat retenu) et `InitiateCheckout` (clic sur « Je réserve »).
