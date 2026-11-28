@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/static/seminaire.css">
 {% include 'seminaire_pixel.html' %}
 </head>
-<body>
+<body class="theme-{{ theme }}">
 <div class="logo"><a href="/seminaire"><img src="/static/logo_accounts.jpg" alt="Account's"></a></div>
 
 <main class="qz" id="quiz">
@@ -42,7 +42,7 @@
       <div class="qz-haut"><button type="button" class="retour" id="retour2">← Retour</button><span class="compte">Dernière étape</span></div>
       <div class="barre"><i style="width:100%"></i></div>
       <div class="centre">
-        <svg class="cadenas" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF2FED"/><stop offset="1" stop-color="#3B6FE0"/></linearGradient></defs><rect x="5" y="10" width="14" height="11" rx="2.5" fill="url(#gc)"/><path d="M8 10V7a4 4 0 018 0v3" fill="none" stroke="#FF8AF6" stroke-width="2.4"/></svg>
+        <svg class="cadenas" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--i1)"/><stop offset="1" style="stop-color:var(--i2)"/></linearGradient></defs><rect x="5" y="10" width="14" height="11" rx="2.5" fill="url(#gc)"/><path d="M8 10V7a4 4 0 018 0v3" fill="none" style="stroke:var(--i1)" stroke-width="2.4"/></svg>
         <h2 class="qz-q">Votre candidature est prête</h2>
         <p class="qz-aide">Indiquez vos coordonnées pour voir la réponse. Nous vous contacterons sur WhatsApp pour la suite.</p>
       </div>
@@ -138,8 +138,8 @@ $('form').addEventListener('submit', async e => {
   }
 });
 
-const ANNEAU = (ok) => `<div class="anneau"><svg viewBox="0 0 120 120"><defs><linearGradient id="ga" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF2FED"/><stop offset="1" stop-color="#3B6FE0"/></linearGradient></defs>
-  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+const ANNEAU = (ok) => `<div class="anneau"><svg viewBox="0 0 120 120"><defs><linearGradient id="ga" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--i1)"/><stop offset="1" style="stop-color:var(--i2)"/></linearGradient></defs>
+  <circle cx="60" cy="60" r="52" fill="none" style="stroke:var(--bord)" stroke-width="10"/>
   <circle cx="60" cy="60" r="52" fill="none" stroke="url(#ga)" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="${ok ? 0 : 160}" transform="rotate(-90 60 60)"/></svg><b>${ok ? '✓' : '…'}</b></div>`;
 
 function resultat(j, d) {

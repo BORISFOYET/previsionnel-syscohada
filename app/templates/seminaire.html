@@ -12,7 +12,7 @@
 {% include 'seminaire_pixel.html' %}
 <script>fbq('track','ViewContent',{content_name:'Séminaires business plan'});</script>
 </head>
-<body>
+<body class="theme-{{ theme }}">
 {% set CTA %}<a class="cta vers-quiz" href="/seminaire/candidature"><b>Oui, je candidate pour ma place</b><span>{{ s.places }} places · Réponse immédiate · 2 minutes</span></a>{% endset %}
 
 <div class="annonce">Session de lancement · {{ s.places }} places seulement · Démarrage le {{ s.debut }}</div>
@@ -27,13 +27,13 @@
       <iframe src="https://www.youtube-nocookie.com/embed/{{ s.video }}?rel=0" title="Présentation des séminaires" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
     {% else %}
       <div class="visuel"><svg class="doc" viewBox="0 0 200 200" aria-hidden="true">
-        <defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF2FED"/><stop offset="1" stop-color="#3B6FE0"/></linearGradient></defs>
-        <rect x="45" y="20" width="110" height="145" rx="14" fill="#fff"/>
-        <rect x="62" y="42" width="60" height="9" rx="4" fill="#331C77"/>
-        <rect x="62" y="60" width="76" height="6" rx="3" fill="#D9D2F3"/><rect x="62" y="72" width="70" height="6" rx="3" fill="#D9D2F3"/>
+        <defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--i1)"/><stop offset="1" style="stop-color:var(--i2)"/></linearGradient></defs>
+        <rect x="45" y="20" width="110" height="145" rx="14" style="fill:var(--i0)"/>
+        <rect x="62" y="42" width="60" height="9" rx="4" style="fill:var(--i3)"/>
+        <rect x="62" y="60" width="76" height="6" rx="3" style="fill:var(--i4)"/><rect x="62" y="72" width="70" height="6" rx="3" style="fill:var(--i4)"/>
         <rect x="64" y="118" width="12" height="28" rx="3" fill="url(#gd)"/><rect x="82" y="104" width="12" height="42" rx="3" fill="url(#gd)"/>
         <rect x="100" y="92" width="12" height="54" rx="3" fill="url(#gd)"/><rect x="118" y="80" width="12" height="66" rx="3" fill="url(#gd)"/>
-        <circle cx="150" cy="158" r="26" fill="url(#gd)"/><path d="M138 158l8 8 16-17" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="150" cy="158" r="26" fill="url(#gd)"/><path d="M138 158l8 8 16-17" fill="none" style="stroke:var(--i0)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg></div>
     {% endif %}
   </div></div>
@@ -71,7 +71,7 @@
   <h2 class="centre">Voici tout ce que vous recevez :</h2>
 
   <div class="lueur offre">
-    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="16" y="22" width="68" height="60" rx="9" fill="#fff"/><rect x="16" y="22" width="68" height="16" rx="9" fill="#FF2FED"/><rect x="16" y="31" width="68" height="7" fill="#FF2FED"/><g fill="#331C77"><rect x="26" y="46" width="10" height="10" rx="2"/><rect x="45" y="46" width="10" height="10" rx="2"/><rect x="64" y="46" width="10" height="10" rx="2"/><rect x="26" y="63" width="10" height="10" rx="2"/></g><rect x="45" y="63" width="10" height="10" rx="2" fill="#3B6FE0"/><rect x="30" y="14" width="6" height="14" rx="3" fill="#fff"/><rect x="64" y="14" width="6" height="14" rx="3" fill="#fff"/></svg></div></div>
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="16" y="22" width="68" height="60" rx="9" style="fill:var(--i0)"/><rect x="16" y="22" width="68" height="16" rx="9" style="fill:var(--i1)"/><rect x="16" y="31" width="68" height="7" style="fill:var(--i1)"/><g style="fill:var(--i3)"><rect x="26" y="46" width="10" height="10" rx="2"/><rect x="45" y="46" width="10" height="10" rx="2"/><rect x="64" y="46" width="10" height="10" rx="2"/><rect x="26" y="63" width="10" height="10" rx="2"/></g><rect x="45" y="63" width="10" height="10" rx="2" style="fill:var(--i2)"/><rect x="30" y="14" width="6" height="14" rx="3" style="fill:var(--i0)"/><rect x="64" y="14" width="6" height="14" rx="3" style="fill:var(--i0)"/></svg></div></div>
     <div><span class="etiquette">Inclus</span><h3>Les 4 séminaires, 4 livrables.</h3>
       <ul class="coches">
         <li><b>Séminaire 1 · Votre marché.</b> Clientèle cible, concurrents, hypothèses de ventes chiffrées.</li>
@@ -82,7 +82,7 @@
   </div>
 
   <div class="lueur offre inverse">
-    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="18" y="16" width="64" height="70" rx="8" fill="#fff"/><g fill="#D9D2F3"><rect x="28" y="28" width="44" height="5" rx="2"/><rect x="28" y="38" width="36" height="5" rx="2"/></g><g fill="#FF2FED"><rect x="30" y="62" width="8" height="14" rx="2"/></g><rect x="43" y="55" width="8" height="21" rx="2" fill="#B33BE8"/><rect x="56" y="48" width="8" height="28" rx="2" fill="#3B6FE0"/></svg></div></div>
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="18" y="16" width="64" height="70" rx="8" style="fill:var(--i0)"/><g style="fill:var(--i4)"><rect x="28" y="28" width="44" height="5" rx="2"/><rect x="28" y="38" width="36" height="5" rx="2"/></g><g style="fill:var(--i1)"><rect x="30" y="62" width="8" height="14" rx="2"/></g><rect x="43" y="55" width="8" height="21" rx="2" style="fill:var(--i1)"/><rect x="56" y="48" width="8" height="28" rx="2" style="fill:var(--i2)"/></svg></div></div>
     <div><span class="etiquette">Bonus 1</span><h3>L'outil prévisionnel Account's.</h3><div class="valeur">Valeur 24 900 FCFA</div>
       <ul class="coches">
         <li>Votre prévisionnel aux normes SYSCOHADA, pour les 17 pays OHADA.</li>
@@ -93,7 +93,7 @@
   </div>
 
   <div class="lueur offre">
-    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="22" y="14" width="56" height="72" rx="8" fill="#fff"/><rect x="36" y="9" width="28" height="12" rx="5" fill="#331C77"/><g stroke="#FF2FED" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M32 36l4 4 7-8"/><path d="M32 54l4 4 7-8"/><path d="M32 72l4 4 7-8"/></g><g fill="#D9D2F3"><rect x="50" y="35" width="20" height="5" rx="2"/><rect x="50" y="53" width="20" height="5" rx="2"/><rect x="50" y="71" width="20" height="5" rx="2"/></g></svg></div></div>
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="22" y="14" width="56" height="72" rx="8" style="fill:var(--i0)"/><rect x="36" y="9" width="28" height="12" rx="5" style="fill:var(--i3)"/><g style="stroke:var(--i1)" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M32 36l4 4 7-8"/><path d="M32 54l4 4 7-8"/><path d="M32 72l4 4 7-8"/></g><g style="fill:var(--i4)"><rect x="50" y="35" width="20" height="5" rx="2"/><rect x="50" y="53" width="20" height="5" rx="2"/><rect x="50" y="71" width="20" height="5" rx="2"/></g></svg></div></div>
     <div><span class="etiquette">Bonus 2</span><h3>Le kit dossier bancaire.</h3>
       <ul class="coches">
         <li>Le modèle de business plan à compléter, section par section.</li>
@@ -104,7 +104,7 @@
   </div>
 
   <div class="lueur offre inverse">
-    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="30" fill="#fff"/><path d="M50 30v21l13 8" stroke="#331C77" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="74" cy="74" r="14" fill="#FF2FED"/><path d="M67 74l5 5 9-10" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="30" style="fill:var(--i0)"/><path d="M50 30v21l13 8" style="stroke:var(--i3)" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="74" cy="74" r="14" style="fill:var(--i1)"/><path d="M67 74l5 5 9-10" style="stroke:var(--i0)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
     <div><span class="etiquette">Bonus 3</span><h3>30 minutes de relecture individuelle.</h3>
       <ul class="coches">
         <li>Votre dossier relu avant votre rendez-vous bancaire.</li>
@@ -114,7 +114,7 @@
   </div>
 
   <div class="lueur offre">
-    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M20 26h44a8 8 0 018 8v22a8 8 0 01-8 8H40l-12 10v-10h-8a8 8 0 01-8-8V34a8 8 0 018-8z" fill="#fff"/><path d="M60 46h20a8 8 0 018 8v16a8 8 0 01-8 8h-2v9l-10-9H60a8 8 0 01-8-8z" fill="#3B6FE0"/><g fill="#FF2FED"><circle cx="30" cy="45" r="4"/><circle cx="42" cy="45" r="4"/><circle cx="54" cy="45" r="4"/></g></svg></div></div>
+    <div class="illus"><div class="fond"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M20 26h44a8 8 0 018 8v22a8 8 0 01-8 8H40l-12 10v-10h-8a8 8 0 01-8-8V34a8 8 0 018-8z" style="fill:var(--i0)"/><path d="M60 46h20a8 8 0 018 8v16a8 8 0 01-8 8h-2v9l-10-9H60a8 8 0 01-8-8z" style="fill:var(--i2)"/><g style="fill:var(--i1)"><circle cx="30" cy="45" r="4"/><circle cx="42" cy="45" r="4"/><circle cx="54" cy="45" r="4"/></g></svg></div></div>
     <div><span class="etiquette">Bonus 4</span><h3>Le groupe des participants.</h3>
       <ul class="coches">
         <li>Un groupe WhatsApp d'entraide entre les {{ s.places }} participants.</li>

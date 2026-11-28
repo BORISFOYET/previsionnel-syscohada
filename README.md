@@ -79,6 +79,7 @@ Réglages (variables d'environnement Vercel, puis redéployer) :
 - `SEMINAIRE_WEBHOOK` : adresse de la feuille Google qui enregistre les candidatures (voir `outils/feuille_candidatures.gs`) ;
 - `SEMINAIRE_LIEU` : lieu affiché sur la page (ex. « Locaux d'ACCOUNT'S, Douala » ou « En ligne ») ;
 - `SEMINAIRE_VIDEO` : identifiant YouTube de la vidéo de présentation (ex. `dQw4w9WgXcQ`), facultatif ;
+- `SEMINAIRE_THEME` : ambiance de couleurs, `or` (par défaut), `sobre`, `clair` ou `accounts` ; on peut comparer en ajoutant `?theme=clair` à l'adresse ;
 - `SEMINAIRE_WHATSAPP` : numéro de contact, chiffres seulement (ex. `2376XXXXXXXX`), facultatif.
 
 Côté Chariow : produit de type Service à 69 900 FCFA, quantité 20, et dans les réglages du produit le lien du

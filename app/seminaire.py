@@ -18,6 +18,8 @@ CODE_PROMO = os.environ.get('SEMINAIRE_CODE_PROMO', 'LANCEMENT25')  # code Chari
 WEBHOOK = os.environ.get('SEMINAIRE_WEBHOOK', '')                   # Google Apps Script qui ajoute une ligne à la feuille
 WHATSAPP = os.environ.get('SEMINAIRE_WHATSAPP', '')                 # numéro de contact au format 2376XXXXXXXX
 PIXEL_META = os.environ.get('PIXEL_META', '1125923300431099')
+THEMES = ('sobre', 'clair', 'or', 'accounts')
+THEME = os.environ.get('SEMINAIRE_THEME', 'or')  # ambiance de couleurs ; ?theme=… dans l'adresse pour comparer
 
 SEMINAIRE = {
     'debut': 'samedi 5 décembre 2026',
@@ -71,16 +73,21 @@ async def enregistrer(ligne):
         print('[seminaire] échec envoi feuille :', e, ligne, flush=True)
 
 
+def theme(request):
+    t = request.query_params.get('theme', THEME)
+    return t if t in THEMES else THEME
+
+
 @router.get('/seminaire', response_class=HTMLResponse)
 def page(request: Request):
     return tpl.TemplateResponse(request, 'seminaire.html', {
-        's': SEMINAIRE, 'choix': CHOIX, 'pixel': PIXEL_META, 'whatsapp': WHATSAPP})
+        's': SEMINAIRE, 'choix': CHOIX, 'pixel': PIXEL_META, 'whatsapp': WHATSAPP, 'theme': theme(request)})
 
 
 @router.get('/seminaire/candidature', response_class=HTMLResponse)
 def quiz(request: Request):
     return tpl.TemplateResponse(request, 'seminaire_quiz.html', {
-        's': SEMINAIRE, 'choix': CHOIX, 'pixel': PIXEL_META, 'whatsapp': WHATSAPP})
+        's': SEMINAIRE, 'choix': CHOIX, 'pixel': PIXEL_META, 'whatsapp': WHATSAPP, 'theme': theme(request)})
 
 
 @router.post('/seminaire/candidature')
